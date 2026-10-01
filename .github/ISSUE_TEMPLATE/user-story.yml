@@ -1,0 +1,29 @@
+name: User story / feature
+description: New functionality or use case
+title: "[Feature] "
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      placeholder: As a <actor>, I want <goal> so that <benefit>.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+    validations:
+      required: true
+  - type: input
+    id: usecase
+    attributes:
+      label: Related use case
+      placeholder: UC-03
+  - type: textarea
+    id: notes
+    attributes:
+      label: Technical notes

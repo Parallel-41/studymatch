@@ -1,0 +1,18 @@
+name: Task
+description: Documentation, modelling, setup or technical task
+title: "[Task] "
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
