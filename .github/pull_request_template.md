@@ -18,10 +18,10 @@ Closes #
 ## Screenshots / evidence (if applicable)
 
 ## Checklist (Definition of Done)
-- [ ] Branch name follows `<type>/<issue>-<description>`
+- [ ] Branch created from `main` and named `<type>/<issue>-<description>`
 - [ ] Linked issue, milestone and board card
-- [ ] Builds and runs locally; existing tests pass
+- [ ] Local checks pass (`./mvnw verify` and/or `npm test && npm run lint && npm run build`)
 - [ ] New/changed logic covered by tests where applicable
 - [ ] Follows coding conventions; no secrets, debug code or commented-out code
 - [ ] Docs/README updated if needed
-- [ ] Reviewer assigned (not myself)
+- [ ] Reviewer requested following the rotation in CONTRIBUTING.md (not myself)
