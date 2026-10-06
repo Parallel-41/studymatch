@@ -3,7 +3,7 @@ package pt.upt.studymatch.common.api;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import pt.upt.studymatch.student.application.StudentNotFoundException;
 import java.time.Clock;
 import java.time.Instant;
 
