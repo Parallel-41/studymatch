@@ -83,11 +83,11 @@ Small, focused commits. Never commit secrets, `.env` files, build output or IDE 
 
 | Author | Reviewer |
 |---|---|
-| Daniel | Guilherme |
-| Guilherme | Erzhan |
-| Erzhan | Hugo |
-| Hugo | Diego |
-| Diego | Daniel |
+| Daniel | Diego |
+| Guilherme | Daniel |
+| Erzhan | Guilherme |
+| Hugo | Erzhan |
+| Diego | Hugo |
 
 ## 6. Merge & branch closure
 
