@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: studymatch
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/${DB_NAME:studymatch}
+    username: ${DB_USER:studymatch}
+    password: ${DB_PASSWORD:password}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
