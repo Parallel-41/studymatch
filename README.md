@@ -20,7 +20,7 @@ The product evolves sprint by sprint; requirements are released incrementally.
 |---|---|
 | Daniel | _TBD_ |
 | Guilherme | _TBD_ |
-| Erzhan | _TBD_ |
+| Erzhan | Frontend skeleton and API integration |
 | Hugo | _TBD_ |
 | Diego | _TBD_ |
 
