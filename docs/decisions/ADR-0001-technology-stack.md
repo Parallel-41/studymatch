@@ -1,6 +1,6 @@
 # ADR-0001 — Technology stack
 
-- **Status:** Accepted
+- **Status:** Accepted — accepted by the team in PR #32 (2026-10-14)
 - **Date:** 2026-10-06
 - **Deciders:** Daniel, Guilherme, Erzhan, Hugo, Diego
 - **Issue:** #5
