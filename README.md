@@ -16,13 +16,15 @@ The product evolves sprint by sprint; requirements are released incrementally.
 
 ## Team
 
-| Member | Role in Sprint 1 |
-|---|---|
-| Daniel | _TBD_ |
-| Guilherme | _TBD_ |
-| Erzhan | Frontend skeleton and API integration |
-| Hugo | _TBD_ |
-| Diego | _TBD_ |
+| Member | GitHub | Role in Sprint 1 |
+|---|---|---|
+| Daniel | [@DanielRodrigues871](https://github.com/DanielRodrigues871) | Repository setup and team workflow, technology stack (ADR-0001), architecture, Sprint Review |
+| Guilherme | [@GuilhermeAla123321](https://github.com/GuilhermeAla123321) | Backend skeleton, persistence (MySQL + Flyway), database strategy (ADR-0002) |
+| Erzhan | [@eerrzhan](https://github.com/eerrzhan) | Frontend skeleton and API integration |
+| Hugo | [@HugoGonzalez1](https://github.com/HugoGonzalez1) | Use cases and team proposals |
+| Diego | [@MrNerga](https://github.com/MrNerga) | Domain model |
+
+Reviews follow the rotation in [CONTRIBUTING.md](CONTRIBUTING.md#5-reviews).
 
 ## Repository structure
 
