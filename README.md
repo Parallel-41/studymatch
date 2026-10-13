@@ -19,7 +19,7 @@ The product evolves sprint by sprint; requirements are released incrementally.
 | Member | Role in Sprint 1 |
 |---|---|
 | Daniel | _TBD_ |
-| Guilherme | _TBD_ |
+| Guilherme | Backend and persistence (API, MySQL and Flyway) |
 | Erzhan | Frontend skeleton and API integration |
 | Hugo | _TBD_ |
 | Diego | _TBD_ |
