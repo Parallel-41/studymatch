@@ -1,54 +1,47 @@
 # ADR-0001 — Technology stack
 
-- **Status:** Proposed — to be voted by the team
-- **Date:** 2026-09-23
+- **Status:** Accepted — accepted by the team in PR #32 (2026-10-14)
+- **Date:** 2026-10-06
 - **Deciders:** Daniel, Guilherme, Erzhan, Hugo, Diego
-- **Issue:** #<n>
+- **Issue:** #5
 
 ## Context
-StudyMatch must become a maintainable, testable full-stack application (frontend, API, business logic, persistence) whose requirements change every sprint. The Software Quality course works with Java, JUnit 5, Maven/Gradle, so the stack should make unit, parametrised and performance testing easy.
+StudyMatch must become a maintainable, testable full-stack application (frontend, API, business logic, persistence) whose requirements change every sprint. The Software Quality course works with Java, JUnit 5 and Maven/Gradle, so the stack must make unit, parametrised and performance testing easy.
 
 ## Options considered
 
 ### Backend
-| Option | Suitability | Testability | Team knowledge | Notes |
-|---|---|---|---|---|
-| **Java 21 + Spring Boot 3** | Excellent for REST + layered/domain logic | JUnit 5, Mockito, `@SpringBootTest`, Testcontainers, JaCoCo | Java used in the course | Industry standard; heavy but well documented |
-| Node.js + Express/NestJS (TS) | Good | Jest/Vitest | Varies | Same language as frontend, but diverges from course tooling |
-| Python + FastAPI | Good | pytest | Varies | Fast to start; weaker fit with Maven/Gradle/JUnit topics |
+| Option | Suitability | Testability | Notes |
+|---|---|---|---|
+| **Java 21 + Spring Boot 3** | Excellent for REST + layered/domain logic | JUnit 5, Mockito, `@WebMvcTest`, Testcontainers | Matches course tooling |
+| Node.js + NestJS (TS) | Good | Jest/Vitest | Diverges from course tooling |
+| Python + FastAPI | Good | pytest | Weaker fit with Maven/JUnit topics |
 
 ### Frontend
 | Option | Pros | Cons |
 |---|---|---|
-| **React + Vite + TypeScript** | Most known by the team, huge ecosystem, fast dev server, Vitest + Testing Library | Less opinionated → needs our own structure conventions |
-| Angular | Opinionated structure, TS by default, built-in DI and testing | Steeper learning curve for 15-day sprints |
-| Vue 3 + Vite | Simple, gentle learning curve | Smaller ecosystem than React |
+| **React + Vite + TypeScript** | Largest ecosystem, fast dev server, typed API calls, Vitest | Needs our own structure conventions |
+| Angular | Opinionated, close to Java mindset | Steeper learning curve for short sprints |
+| Vue 3 + Vite | Gentle learning curve | Smaller ecosystem |
 
 ### Persistence
 | Option | Pros | Cons |
 |---|---|---|
-| **PostgreSQL (Docker) + Spring Data JPA + Flyway** | Relational model fits students/courses/enrolments/competencies; migrations versioned; same DB in dev/test/prod | Requires Docker on every machine |
-| H2 / SQLite embedded | Zero setup | Differs from a real server DB; hides production issues |
-| MongoDB | Flexible profiles | Academic data is highly relational; weaker constraints |
+| **MySQL 8 + Spring Data JPA + Flyway** | Relational domain (enrolments, grades, competencies); versioned schema | Needs Docker locally |
+| PostgreSQL | Equally suitable (first proposal of this ADR) | Team more familiar with MySQL (Bases de Dados course) |
+| H2 / SQLite only | Zero setup | Differs from a real server DB |
 
-### Build
-| Option | Notes |
-|---|---|
-| **Maven** (backend) + npm (frontend) | Maven covered in class (MeetingPlanner), conventional, predictable |
-| Gradle | Also covered (ShoppingCart); more flexible, Kotlin/Groovy DSL |
-
-## Proposed decision
-**React + Vite + TypeScript** · **Java 21 + Spring Boot 3 (REST/JSON)** · **PostgreSQL 16 via Docker Compose** · **Spring Data JPA + Flyway** · **Maven** (backend), **npm** (frontend) · Tests: **JUnit 5, Mockito, Testcontainers**, **Vitest** on the frontend.
+## Decision
+**React + Vite + TypeScript** · **Java 21 + Spring Boot 3.5 (REST/JSON)** · **MySQL 8.4 (Docker Compose locally, managed MySQL for the demo)** · **Spring Data JPA + Flyway** · **Maven** (backend), **npm** (frontend) · Tests: **JUnit 5, Mockito, Testcontainers**, **Vitest + Testing Library**.
 
 ## Justification
-- **Suitability:** relational DB matches the academic domain (enrolments, attempts, grades, competencies); Spring Boot gives a clean layered/domain structure for business rules.
-- **Maintainability:** strong typing on both sides (Java + TS); Flyway versioned schema evolves with each sprint's new requirements.
-- **Testability:** JUnit 5 + parametrised tests directly aligned with the course; Testcontainers runs integration tests against real PostgreSQL.
-- **Integration:** REST/JSON with OpenAPI (springdoc) documentation; Vite dev proxy avoids CORS issues locally.
-- **Team knowledge:** Java from the course; React/TS already known by at least part of the team.
-- **Tooling:** IntelliJ/VS Code, GitHub Actions for CI, Docker Compose for a one-command DB.
+- **Suitability:** relational DB fits the academic domain; Spring Boot gives a clean layered structure for business rules.
+- **Maintainability:** strong typing on both sides; Flyway versions every schema change.
+- **Testability:** JUnit 5 parametrised tests align with the course; Testcontainers runs integration tests on real MySQL.
+- **Integration:** REST/JSON; the Vite dev proxy forwards `/api` to the backend (no CORS in development).
+- **Team knowledge:** Java from the course; MySQL known; React has the most learning material.
 
 ## Consequences
-- Every member needs JDK 21, Node 20+ and Docker installed (setup documented in README).
-- Two build tools (Maven + npm) — mitigated by a root-level README with run commands.
-- Revisit if the team lacks Docker access (fallback: H2 in PostgreSQL compatibility mode for local dev).
+- Developers need JDK 21, Node 20+ and Docker; Maven runs through the wrapper (`./mvnw`), so no global install is required.
+- Two build tools (Maven + npm), documented in the README.
+- Integration tests are skipped automatically when Docker is not available.
