@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/${DB_NAME:studymatch}
     username: ${DB_USER:studymatch}
-    password: ${DB_PASSWORD:password}
+    password: ${DB_PASSWORD:change-me}
 
   jpa:
     hibernate:

@@ -6,7 +6,7 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_NAME:-studymatch}
       MYSQL_USER: ${DB_USER:-studymatch}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-change-me}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root-change-me}
     volumes:
       - mysql_data:/var/lib/mysql
