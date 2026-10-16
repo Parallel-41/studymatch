@@ -7,6 +7,9 @@ import pt.upt.studymatch.student.domain.Student;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 @Entity
 @Table(name = "enrolment")
 // Esta classe representa uma incriçao em uma unidade curricular
@@ -86,5 +89,23 @@ public class Enrolment {
 
         attempts.add(attempt);
         attempt.setEnrolment(this);
+    }
+
+    public Optional<BigDecimal> bestPassingGrade() {
+        BigDecimal bestGrade = null;
+
+        for (Attempt attempt : attempts) {
+            if (attempt != null
+                && attempt.getGrade() != null
+                && attempt.getGrade().compareTo(BigDecimal.TEN) >= 0) {
+
+                if (bestGrade == null
+                    || attempt.getGrade().compareTo(bestGrade) > 0) {
+                    bestGrade = attempt.getGrade();
+                }
+            }
+        }
+
+        return Optional.ofNullable(bestGrade);
     }
 }
