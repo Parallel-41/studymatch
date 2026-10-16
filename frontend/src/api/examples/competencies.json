@@ -1,0 +1,17 @@
+[
+  {
+    "code": "DB",
+    "name": "Databases",
+    "competencies": [
+      { "code": "SQL", "name": "SQL" },
+      { "code": "MODEL", "name": "Data modelling" }
+    ]
+  },
+  {
+    "code": "QUAL",
+    "name": "Software Quality",
+    "competencies": [
+      { "code": "TEST", "name": "Unit testing" }
+    ]
+  }
+]
