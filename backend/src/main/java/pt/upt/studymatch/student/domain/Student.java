@@ -1,19 +1,30 @@
 package pt.upt.studymatch.student.domain;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import pt.upt.studymatch.academic.domain.DegreeProgram;
+
+import java.time.Clock;
 
 @Entity
 @Table(
-        name = "student",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_student_number", columnNames = "number"),
-                @UniqueConstraint(name = "uk_student_email", columnNames = "email")
-        }
+    name = "student",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_student_number", columnNames = "number"),
+        @UniqueConstraint(name = "uk_student_email", columnNames = "email")
+    }
 )
 public class Student {
 
@@ -34,20 +45,37 @@ public class Student {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Min(1)
-    @Max(5)
-    @Column(name = "current_year", nullable = false)
-    private Integer currentYear;
+    @NotNull
+    @Min(1900)
+    @Column(name = "registration_year", nullable = false)
+    private Integer registrationYear;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "degree_program_id", nullable = false)
+    private DegreeProgram degreeProgram;
 
     protected Student() {
-        // Required by JPA
+        // Required by JPA.
     }
 
-    public Student(String number, String name, String email, Integer currentYear) {
+    public Student(
+        String number,
+        String name,
+        String email,
+        Integer registrationYear,
+        DegreeProgram degreeProgram
+    ) {
         this.number = number;
         this.name = name;
         this.email = email;
-        this.currentYear = currentYear;
+        this.registrationYear = registrationYear;
+        this.degreeProgram = degreeProgram;
+    }
+
+    public int currentYear(Clock clock) {
+        return clock.instant().atZone(clock.getZone()).getYear()
+            - registrationYear + 1;
     }
 
     public Long getId() {
@@ -66,8 +94,12 @@ public class Student {
         return email;
     }
 
-    public Integer getCurrentYear() {
-        return currentYear;
+    public Integer getRegistrationYear() {
+        return registrationYear;
+    }
+
+    public DegreeProgram getDegreeProgram() {
+        return degreeProgram;
     }
 
     public void setNumber(String number) {
@@ -82,7 +114,11 @@ public class Student {
         this.email = email;
     }
 
-    public void setCurrentYear(Integer currentYear) {
-        this.currentYear = currentYear;
+    public void setRegistrationYear(Integer registrationYear) {
+        this.registrationYear = registrationYear;
+    }
+
+    public void setDegreeProgram(DegreeProgram degreeProgram) {
+        this.degreeProgram = degreeProgram;
     }
 }

@@ -1,8 +1,10 @@
 package pt.upt.studymatch.student.api;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import pt.upt.studymatch.student.application.StudentService;
-import pt.upt.studymatch.student.domain.Student;
 
 import java.util.List;
 
@@ -17,13 +19,12 @@ public class StudentController {
     }
 
     @GetMapping
-    public List<Student> getAllStudents() {
-
+    public List<StudentResponse> getAllStudents() {
         return studentService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Student getStudentById(@PathVariable Long id) {
+    public StudentResponse getStudentById(@PathVariable Long id) {
         return studentService.findById(id);
     }
 }
