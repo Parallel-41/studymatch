@@ -1,0 +1,24 @@
+{
+  "years": [
+    {
+      "academicYear": "2024/25",
+      "semesters": [
+        {
+          "semester": 1,
+          "units": [
+            {
+              "code": "BD1",
+              "name": "Bases de Dados I",
+              "ects": 6,
+              "attempts": [
+                { "season": "NORMAL", "grade": 8 },
+                { "season": "RECURSO", "grade": 14 }
+              ],
+              "bestGrade": 14
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
