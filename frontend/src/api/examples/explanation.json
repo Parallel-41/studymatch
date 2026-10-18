@@ -1,0 +1,9 @@
+{
+  "level": 67.0,
+  "confidence": 0.4,
+  "selfAssessedShare": 0.6,
+  "contributions": [
+    { "courseUnitCode": "BD1", "grade": 14, "weight": 0.8, "recency": 0.72, "share": 0.44 },
+    { "courseUnitCode": "BD2", "grade": 17, "weight": 0.6, "recency": 1.0, "share": 0.56 }
+  ]
+}
