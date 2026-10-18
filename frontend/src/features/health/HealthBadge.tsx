@@ -9,9 +9,9 @@ function HealthBadge() {
 
     const loadStatus = async () => {
       try {
-        await api.health()
+        const response = await api.health()
         if (isMounted) {
-          setStatus('up')
+          setStatus(response.status === 'UP' ? 'up' : 'down')
         }
       } catch {
         if (isMounted) {
