@@ -35,11 +35,11 @@ describe('StudentList', () => {
     expect(await screen.findByText('No students yet.')).toBeInTheDocument()
   })
 
-  it('renders the error state when the request fails', async () => {
-    vi.spyOn(api, 'students').mockRejectedValue(new Error('Request failed'))
+  it('renders the real error message when the request fails', async () => {
+    vi.spyOn(api, 'students').mockRejectedValue(new Error('Service unavailable (503)'))
 
     render(<StudentList />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load students')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable (503)')
   })
 })
