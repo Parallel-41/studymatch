@@ -1,0 +1,9 @@
+{
+  "id": 1,
+  "number": "a51234",
+  "name": "Ana Silva",
+  "email": "ana.silva@example.com",
+  "registrationYear": 2024,
+  "currentYear": 3,
+  "degreeProgram": { "code": "LEI", "name": "Engenharia Informática" }
+}
