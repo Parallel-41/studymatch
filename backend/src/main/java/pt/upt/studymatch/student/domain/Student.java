@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import pt.upt.studymatch.academic.domain.DegreeProgram;
 
 import java.time.Clock;
+import java.time.LocalDate;
 
 @Entity
 @Table(
@@ -74,8 +75,11 @@ public class Student {
     }
 
     public int currentYear(Clock clock) {
-        return clock.instant().atZone(clock.getZone()).getYear()
-            - registrationYear + 1;
+        LocalDate today = LocalDate.now(clock);
+        int academicYearStart = today.getMonthValue() >= 9
+            ? today.getYear()
+            : today.getYear() - 1;
+        return academicYearStart - registrationYear + 1;
     }
 
     public Long getId() {

@@ -1,11 +1,10 @@
-
 package pt.upt.studymatch.academic.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import pt.upt.studymatch.academic.domain.CourseUnit;
 import pt.upt.studymatch.academic.domain.Enrolment;
+import pt.upt.studymatch.academic.domain.EvidenceGrade;
 import pt.upt.studymatch.academic.infrastructure.EnrolmentRepository;
 import pt.upt.studymatch.common.domain.Grade;
 
@@ -14,6 +13,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 
 @Service
@@ -32,59 +33,48 @@ public class AcademicHistoryService {
 
     public List<EvidenceGrade> evidenceGradesFor(Long studentId) {
         if (studentId == null) {
-            throw new IllegalArgumentException(
-                "studentId must not be null."
-            );
+            throw new IllegalArgumentException("studentId must not be null.");
         }
 
         LocalDate today = LocalDate.now(clock);
         int currentSemester = currentSemesterIndex(today);
+        Map<String, EvidenceGrade> evidenceByCourseUnit = new HashMap<>();
 
-        List<EvidenceGrade> evidence = new ArrayList<>();
-
-        for (Enrolment enrolment :
-            enrolmentRepository.findByStudentId(studentId)) {
-
-            Optional<Grade> bestGrade =
-                enrolment.bestPassingGrade();
-
+        for (Enrolment enrolment : enrolmentRepository.findByStudentId(studentId)) {
+            Optional<Grade> bestGrade = enrolment.bestPassingGrade();
             if (bestGrade.isEmpty()) {
                 continue;
             }
 
             CourseUnit courseUnit = enrolment.getCourseUnit();
-
-            int academicYearStart =
-                parseAcademicYearStart(enrolment.getAcademicYear());
-
+            int academicYearStart = parseAcademicYearStart(enrolment.getAcademicYear());
             int courseSemester = courseUnit.getSemester();
-
             if (courseSemester != 1 && courseSemester != 2) {
-                throw new IllegalArgumentException(
-                    "Semester must be 1 or 2."
-                );
+                throw new IllegalArgumentException("Semester must be 1 or 2.");
             }
 
-            int courseSemesterIndex =
-                academicYearStart * 2 + courseSemester - 1;
+            int courseSemesterIndex = academicYearStart * 2 + courseSemester - 1;
+            int semestersAgo = Math.max(0, currentSemester - courseSemesterIndex);
 
-            int semestersAgo =
-                Math.max(0, currentSemester - courseSemesterIndex);
-
-            evidence.add(new EvidenceGrade(
-                courseUnit.getId(),
+            EvidenceGrade candidate = new EvidenceGrade(
                 courseUnit.getCode(),
-                courseUnit.getName(),
+                courseUnit.getEcts(),
                 bestGrade.get(),
                 semestersAgo
-            ));
+            );
+
+            EvidenceGrade previous = evidenceByCourseUnit.get(candidate.courseUnitCode());
+            if (previous == null
+                || candidate.grade().value() > previous.grade().value()
+                || (candidate.grade().value() == previous.grade().value()
+                    && candidate.semestersAgo() < previous.semestersAgo())) {
+                evidenceByCourseUnit.put(candidate.courseUnitCode(), candidate);
+            }
         }
 
-        evidence.sort(
-            Comparator.comparingInt(EvidenceGrade::semestersAgo)
-                .thenComparing(EvidenceGrade::courseUnitCode)
-        );
-
+        List<EvidenceGrade> evidence = new ArrayList<>(evidenceByCourseUnit.values());
+        evidence.sort(Comparator.comparingInt(EvidenceGrade::semestersAgo)
+            .thenComparing(EvidenceGrade::courseUnitCode));
         return List.copyOf(evidence);
     }
 
@@ -108,13 +98,19 @@ public class AcademicHistoryService {
     }
 
     private static int parseAcademicYearStart(String academicYear) {
-        if (academicYear == null
-            || !academicYear.matches("\\d{4}/\\d{4}")) {
+        if (academicYear == null || !academicYear.matches("\\d{4}/\\d{2}")) {
             throw new IllegalArgumentException(
-                "Academic year must have the format YYYY/YYYY."
+                "Academic year must have the format YYYY/YY, e.g. 2024/25."
             );
         }
 
-        return Integer.parseInt(academicYear.substring(0, 4));
+        int start = Integer.parseInt(academicYear.substring(0, 4));
+        int end = Integer.parseInt(academicYear.substring(5, 7));
+        if (end != (start + 1) % 100) {
+            throw new IllegalArgumentException(
+                "Academic year must span consecutive years."
+            );
+        }
+        return start;
     }
 }

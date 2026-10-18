@@ -70,7 +70,11 @@ ALTER TABLE student
     ADD COLUMN registration_year INT NULL;
 
 UPDATE student
-SET registration_year = YEAR(CURRENT_DATE()) - current_year + 1;
+SET registration_year =
+    (CASE WHEN MONTH(CURRENT_DATE()) >= 9
+          THEN YEAR(CURRENT_DATE())
+          ELSE YEAR(CURRENT_DATE()) - 1 END)
+    - current_year + 1;
 
 ALTER TABLE student
     MODIFY COLUMN registration_year INT NOT NULL;

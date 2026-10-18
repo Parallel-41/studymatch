@@ -12,7 +12,7 @@ class EnrolmentTest {
     @Test
     void returnsEmptyWhenThereAreNoAttempts() {
         Enrolment enrolment = new Enrolment(
-            null, null, "2026/2027", EnrolmentStatus.ENROLLED
+            null, null, "2026/27", EnrolmentStatus.ENROLLED
         );
 
         assertTrue(enrolment.bestPassingGrade().isEmpty());
@@ -21,7 +21,7 @@ class EnrolmentTest {
     @Test
     void returnsEmptyWhenNoAttemptHasPassingGrade() {
         Enrolment enrolment = new Enrolment(
-            null, null, "2026/2027", EnrolmentStatus.ENROLLED
+            null, null, "2026/27", EnrolmentStatus.ENROLLED
         );
 
         enrolment.addAttempt(new Attempt(
@@ -39,7 +39,7 @@ class EnrolmentTest {
     @Test
     void considersGradeTenAsPassing() {
         Enrolment enrolment = new Enrolment(
-            null, null, "2026/2027", EnrolmentStatus.ENROLLED
+            null, null, "2026/27", EnrolmentStatus.ENROLLED
         );
 
         enrolment.addAttempt(new Attempt(
@@ -56,7 +56,7 @@ class EnrolmentTest {
     @Test
     void returnsHighestPassingGradeAcrossAllAttempts() {
         Enrolment enrolment = new Enrolment(
-            null, null, "2026/2027", EnrolmentStatus.ENROLLED
+            null, null, "2026/27", EnrolmentStatus.ENROLLED
         );
 
         enrolment.addAttempt(new Attempt(

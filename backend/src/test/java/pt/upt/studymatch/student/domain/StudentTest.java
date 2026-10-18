@@ -63,6 +63,18 @@ class StudentTest {
             ZoneOffset.UTC
         );
 
-        assertEquals(3, student.currentYear(clockFor2027));
+        assertEquals(2, student.currentYear(clockFor2027));
+    }
+
+    @Test
+    void newAcademicYearStartsInSeptember() {
+        Student student = createStudent(2025);
+        Clock aug2026 = Clock.fixed(
+            Instant.parse("2026-08-31T12:00:00Z"), ZoneOffset.UTC);
+        Clock sep2026 = Clock.fixed(
+            Instant.parse("2026-09-01T12:00:00Z"), ZoneOffset.UTC);
+
+        assertEquals(1, student.currentYear(aug2026));
+        assertEquals(2, student.currentYear(sep2026));
     }
 }
