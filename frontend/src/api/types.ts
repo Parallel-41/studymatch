@@ -11,3 +11,13 @@ export type Student = {
   email: string
   currentYear: number
 }
+
+export type StudentAttempt = {
+  id: number
+  course: string
+  academicYear: string
+  semester: number
+  grade: number
+}
+
+export type StudentAttemptDraft = Omit<StudentAttempt, 'id'>
