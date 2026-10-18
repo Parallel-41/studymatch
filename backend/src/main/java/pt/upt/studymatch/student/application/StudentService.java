@@ -1,12 +1,14 @@
 package pt.upt.studymatch.student.application;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pt.upt.studymatch.student.domain.Student;
 import pt.upt.studymatch.student.infrastructure.StudentRepository;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class StudentService {
 
     private final StudentRepository studentRepository;
@@ -16,12 +18,11 @@ public class StudentService {
     }
 
     public List<Student> findAll() {
-
         return studentRepository.findAll();
     }
 
     public Student findById(Long id) {
         return studentRepository.findById(id)
-                .orElseThrow(() -> new StudentNotFoundException(id));
+            .orElseThrow(() -> new StudentNotFoundException(id));
     }
 }
