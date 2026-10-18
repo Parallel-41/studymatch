@@ -1,6 +1,7 @@
 import type {
   CompetencyExplanation,
   HealthResponse,
+  StudentProfileData,
   Student,
   StudentAttempt,
   StudentAttemptDraft,
@@ -52,6 +53,21 @@ const mockCompetencyExplanation: CompetencyExplanation = {
     { courseUnit: 'Software Engineering', grade: 17, weight: 0.35, recencyFactor: 0.8, percentageOfLevel: 30 },
   ],
   selfAssessmentShare: 35,
+}
+
+const mockStudentProfile: StudentProfileData = {
+  areas: [
+    { code: 'technical', name: 'Technical', level: 76 },
+    { code: 'analytical', name: 'Analytical', level: 84 },
+    { code: 'collaboration', name: 'Collaboration', level: 58 },
+    { code: 'communication', name: 'Communication', level: 0 },
+  ],
+  competencies: [
+    { code: 'problem-solving', name: 'Problem solving', areaCode: 'analytical', level: 84, confidence: 'HIGH' },
+    { code: 'programming', name: 'Programming', areaCode: 'technical', level: 76, confidence: 'MEDIUM' },
+    { code: 'teamwork', name: 'Teamwork', areaCode: 'collaboration', level: 58, confidence: 'LOW' },
+    { code: 'presentation', name: 'Presentation', areaCode: 'communication', level: 0, confidence: 'LOW' },
+  ],
 }
 
 const matchQuery = (student: Student, query: string) => {
@@ -176,6 +192,11 @@ export const api = {
     getJson<CompetencyExplanation>(
       `/api/students/${studentId}/profile/competencies/${encodeURIComponent(competencyCode)}/explanation`,
       mockCompetencyExplanation,
+    ),
+  studentProfile: (studentId: number) =>
+    getJson<StudentProfileData>(
+      `/api/students/${studentId}/profile`,
+      mockStudentProfile,
     ),
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const payload: StudentAttempt = { ...attempt, id: Date.now() }

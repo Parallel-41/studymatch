@@ -1,23 +1,117 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
-import type { CompetencyExplanation, Student } from '../../api/types'
+import type { CompetencyExplanation, ProfileArea, Student, StudentProfileData } from '../../api/types'
 
 type StudentProfileProps = {
   student: Student
 }
 
-const competencies = [
-  { code: 'problem-solving', name: 'Problem solving' },
-  { code: 'programming', name: 'Programming' },
-  { code: 'teamwork', name: 'Teamwork' },
-]
+const chartCenter = { x: 200, y: 160 }
+const chartRadius = 105
+
+function chartPoint(index: number, count: number, radius: number) {
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / count
+  return `${chartCenter.x + Math.cos(angle) * radius},${chartCenter.y + Math.sin(angle) * radius}`
+}
+
+function ProfileRadarChart({ areas }: { areas: ProfileArea[] }) {
+  const availableAreas = areas.filter((area) => area.level !== null)
+  const missingAreas = areas.filter((area) => area.level === null)
+
+  if (availableAreas.length < 3) {
+    return (
+      <section className="profile-radar" aria-label="Profile by area">
+        <h3>Profile by area</h3>
+        <p role="status">Not enough data to display the radar chart.</p>
+        {missingAreas.length > 0 ? (
+          <p className="no-data-areas">No data for: {missingAreas.map((area) => area.name).join(', ')}</p>
+        ) : null}
+      </section>
+    )
+  }
+
+  const points = availableAreas.map((area, index) => {
+    const normalizedLevel = Math.max(0, Math.min(100, area.level ?? 0))
+    const radius = chartRadius * normalizedLevel / 100
+    return {
+      ...area,
+      point: chartPoint(index, availableAreas.length, radius),
+      labelPoint: chartPoint(index, availableAreas.length, chartRadius + 32).split(',').map(Number),
+    }
+  })
+
+  return (
+    <section className="profile-radar" aria-label="Profile by area">
+      <h3>Profile by area</h3>
+      <svg viewBox="0 0 400 320" role="img" aria-label="Radar chart showing profile level from 0 to 100 by area">
+        {[25, 50, 75, 100].map((step) => (
+          <polygon
+            key={step}
+            points={availableAreas.map((_, index) => chartPoint(index, availableAreas.length, chartRadius * step / 100)).join(' ')}
+            className="radar-grid"
+          />
+        ))}
+        {availableAreas.map((area, index) => (
+          <line
+            key={area.code}
+            x1={chartCenter.x}
+            y1={chartCenter.y}
+            x2={chartPoint(index, availableAreas.length, chartRadius).split(',')[0]}
+            y2={chartPoint(index, availableAreas.length, chartRadius).split(',')[1]}
+            className="radar-axis"
+          />
+        ))}
+        <polygon points={points.map(({ point }) => point).join(' ')} className="radar-value" />
+        {points.map(({ code, level, name, labelPoint, point }) => (
+          <g key={code}>
+            <circle cx={point.split(',')[0]} cy={point.split(',')[1]} r="4" className="radar-point" />
+            <text x={labelPoint[0]} y={labelPoint[1]} className="radar-label" textAnchor="middle">
+              {name} ({level})
+            </text>
+          </g>
+        ))}
+      </svg>
+      {missingAreas.length > 0 ? (
+        <p className="no-data-areas">No data for: {missingAreas.map((area) => area.name).join(', ')}</p>
+      ) : null}
+    </section>
+  )
+}
 
 function StudentProfile({ student }: StudentProfileProps) {
+  const [profile, setProfile] = useState<StudentProfileData | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState<string | null>(null)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [explanation, setExplanation] = useState<CompetencyExplanation | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const selectedCompetency = competencies.find(({ code }) => code === selectedCode)
+  const selectedCompetency = profile?.competencies.find(({ code }) => code === selectedCode)
+
+  useEffect(() => {
+    let isCurrent = true
+
+    void api.studentProfile(student.id)
+      .then((result) => {
+        if (isCurrent) {
+          setProfile(result)
+        }
+      })
+      .catch((loadError: unknown) => {
+        if (isCurrent) {
+          setProfileError(loadError instanceof Error ? loadError.message : 'Unable to load student profile.')
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setProfileLoading(false)
+        }
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [student.id])
 
   const toggleCompetency = (code: string) => {
     if (selectedCode === code) {
@@ -67,19 +161,59 @@ function StudentProfile({ student }: StudentProfileProps) {
     <section className="student-profile-panel" aria-label={`${student.name} profile`}>
       <h2>{student.name}&apos;s profile</h2>
       <p className="profile-identity">Student {student.number} · Year {student.currentYear}</p>
-      <h3>Competencies</h3>
-      <div className="profile-competency-list">
-        {competencies.map((competency) => (
-          <button
-            key={competency.code}
-            type="button"
-            aria-expanded={selectedCode === competency.code}
-            onClick={() => toggleCompetency(competency.code)}
-          >
-            {competency.name}
-          </button>
-        ))}
-      </div>
+      {profileLoading ? <p role="status">Loading profile...</p> : null}
+      {profileError ? <div className="error-box" role="alert">{profileError}</div> : null}
+      {profile ? (
+        <>
+          <ProfileRadarChart areas={profile.areas} />
+          <section className="profile-competencies" aria-label="Competency levels">
+            <h3>Competencies</h3>
+            <div className="table-wrap">
+              <table aria-label="Competency levels and confidence">
+                <thead>
+                  <tr>
+                    <th>Competency</th>
+                    <th>Area</th>
+                    <th>Level</th>
+                    <th>Confidence</th>
+                    <th>Explanation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {profile.competencies.map((competency) => {
+                    const area = profile.areas.find(({ code }) => code === competency.areaCode)
+                    const confidenceLabel = competency.confidence
+                      ? `${competency.confidence.charAt(0)}${competency.confidence.slice(1).toLowerCase()} confidence`
+                      : 'No data'
+
+                    return (
+                      <tr key={competency.code}>
+                        <td>{competency.name}</td>
+                        <td>{area?.name ?? 'No data'}</td>
+                        <td>{competency.level === null ? <span className="no-data-value">No data</span> : competency.level}</td>
+                        <td>
+                          <span className={competency.confidence === 'LOW' ? 'low-confidence' : 'confidence-label'}>
+                            {confidenceLabel}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            aria-expanded={selectedCode === competency.code}
+                            onClick={() => toggleCompetency(competency.code)}
+                          >
+                            {selectedCode === competency.code ? 'Hide explanation' : 'Explain'}
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      ) : null}
 
       {selectedCompetency ? (
         <section className="competency-explanation" aria-label={`${selectedCompetency.name} explanation`}>

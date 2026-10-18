@@ -35,3 +35,24 @@ export type CompetencyExplanation = {
   contributions: CompetencyContribution[]
   selfAssessmentShare: number
 }
+
+export type ProfileConfidence = 'HIGH' | 'MEDIUM' | 'LOW'
+
+export type ProfileArea = {
+  code: string
+  name: string
+  level: number | null
+}
+
+export type ProfileCompetency = {
+  code: string
+  name: string
+  areaCode: string
+  level: number | null
+  confidence: ProfileConfidence | null
+}
+
+export type StudentProfileData = {
+  areas: ProfileArea[]
+  competencies: ProfileCompetency[]
+}

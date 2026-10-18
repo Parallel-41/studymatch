@@ -60,12 +60,16 @@ describe('StudentList', () => {
       ],
       selfAssessmentShare: 35,
     })
+    vi.spyOn(api, 'studentProfile').mockResolvedValue({
+      areas: [{ code: 'technical', name: 'Technical', level: 76 }, { code: 'analytical', name: 'Analytical', level: 84 }, { code: 'collaboration', name: 'Collaboration', level: 58 }],
+      competencies: [{ code: 'programming', name: 'Programming', areaCode: 'technical', level: 76, confidence: 'HIGH' }],
+    })
 
     render(<StudentList />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Profile' }))
     expect(await screen.findByRole('region', { name: 'Ana Ribeiro profile' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Programming' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Explain' }))
 
     expect(await screen.findByRole('heading', { name: 'Programming explanation' })).toBeInTheDocument()
     expect(explanationRequest).toHaveBeenCalledWith(1, 'programming')

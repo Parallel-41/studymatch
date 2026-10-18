@@ -243,6 +243,70 @@ tbody tr:hover {
   background: #0f5147;
 }
 
+.profile-radar {
+  width: min(100%, 520px);
+  margin: 18px 0 26px;
+}
+
+.profile-radar h3,
+.profile-competencies h3 {
+  margin: 0 0 12px;
+}
+
+.profile-radar svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+
+.radar-axis {
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+
+.radar-value {
+  fill: rgba(23, 107, 91, 0.2);
+  stroke: #176b5b;
+  stroke-width: 2;
+}
+
+.radar-point {
+  fill: #0f5147;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.radar-label {
+  fill: #334155;
+  font-size: 11px;
+}
+
+.no-data-areas,
+.no-data-value {
+  color: #64748b;
+  font-style: italic;
+}
+
+.low-confidence {
+  display: inline-block;
+  border: 1px solid #b45309;
+  border-radius: 4px;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 2px 7px;
+  font-weight: 700;
+}
+
+.confidence-label {
+  color: #475569;
+}
+
 .competency-explanation {
   display: grid;
   gap: 14px;
