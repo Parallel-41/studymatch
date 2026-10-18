@@ -56,3 +56,6 @@ export type StudentProfileData = {
   areas: ProfileArea[]
   competencies: ProfileCompetency[]
 }
+export type SelfAssessmentData = {
+  levels: Record<string, number>
+}

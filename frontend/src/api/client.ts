@@ -5,6 +5,7 @@ import type {
   Student,
   StudentAttempt,
   StudentAttemptDraft,
+  SelfAssessmentData,
 } from './types'
 
 export type StudentDraft = Omit<Student, 'id'>
@@ -68,6 +69,17 @@ const mockStudentProfile: StudentProfileData = {
     { code: 'teamwork', name: 'Teamwork', areaCode: 'collaboration', level: 58, confidence: 'LOW' },
     { code: 'presentation', name: 'Presentation', areaCode: 'communication', level: 0, confidence: 'LOW' },
   ],
+}
+
+const mockSelfAssessment: SelfAssessmentData = {
+  levels: {
+    'PROG': 50,
+    'DB': 50,
+    'WEB': 50,
+    'QUAL': 50,
+    'MATH': 50,
+    'SOFT': 50
+  }
 }
 
 const matchQuery = (student: Student, query: string) => {
@@ -224,6 +236,30 @@ export const api = {
       mockAttempts[studentId] ??= []
       mockAttempts[studentId].push(payload)
       return payload
+    }
+  },
+  getSelfAssessment: (studentId: number) =>
+    getJson<SelfAssessmentData>(
+      `/api/students/${studentId}/self-assessment`,
+      mockSelfAssessment
+    ),
+  saveSelfAssessment: async (studentId: number, data: SelfAssessmentData) => {
+    try {
+      const response = await fetch(`/api/students/${studentId}/self-assessment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const body = (await response.json().catch(() => null))
+
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Error saving self-assessment', response.status)
+      }
+      return (body ?? data) as SelfAssessmentData
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      mockSelfAssessment.levels = { ...data.levels }
+      return data
     }
   },
 }
