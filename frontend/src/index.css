@@ -216,6 +216,74 @@ tbody tr:hover {
   padding: 20px 24px 4px;
 }
 
+.student-profile-panel {
+  margin-top: 22px;
+  padding: 20px 0 4px;
+  border-top: 1px solid #dfe7f1;
+}
+
+.student-profile-panel h2,
+.student-profile-panel h3,
+.competency-explanation h3 {
+  margin: 0 0 12px;
+}
+
+.profile-identity {
+  margin: -6px 0 18px;
+  color: #64748b;
+}
+
+.profile-competency-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-list-shell .profile-competency-list button[aria-expanded='true'] {
+  background: #0f5147;
+}
+
+.competency-explanation {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #dfe7f1;
+}
+
+.competency-level {
+  margin: 0;
+}
+
+.self-assessment-share {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  padding: 12px 14px;
+  border-left: 3px solid #b45309;
+  background: #fff7ed;
+}
+
+.self-assessment-share .contribution-track {
+  grid-column: 1 / -1;
+}
+
+.contribution-track {
+  width: 100%;
+  height: 7px;
+  margin-top: 5px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+.contribution-track span {
+  display: block;
+  height: 100%;
+  background: #176b5b;
+  border-radius: inherit;
+}
+
 .student-history {
   display: grid;
   gap: 16px;
@@ -276,5 +344,9 @@ tbody tr:hover {
     margin-right: -16px;
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .student-profile-panel {
+    overflow-wrap: anywhere;
   }
 }

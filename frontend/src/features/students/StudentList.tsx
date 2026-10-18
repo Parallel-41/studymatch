@@ -3,6 +3,7 @@ import { api } from '../../api/client'
 import type { Student } from '../../api/types'
 import StudentForm, { type StudentFormValues } from './StudentForm'
 import StudentHistory from './StudentHistory'
+import StudentProfile from './StudentProfile'
 
 function StudentList() {
   const [students, setStudents] = useState<Student[]>([])
@@ -11,6 +12,7 @@ function StudentList() {
   const [search, setSearch] = useState('')
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [historyStudent, setHistoryStudent] = useState<Student | null>(null)
+  const [profileStudent, setProfileStudent] = useState<Student | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -153,6 +155,12 @@ function StudentList() {
                     >
                       {historyStudent?.id === student.id ? 'Hide history' : 'History'}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileStudent((current) => current?.id === student.id ? null : student)}
+                    >
+                      {profileStudent?.id === student.id ? 'Hide profile' : 'Profile'}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -167,6 +175,8 @@ function StudentList() {
           <StudentHistory studentId={historyStudent.id} />
         </div>
       ) : null}
+
+      {profileStudent ? <StudentProfile key={profileStudent.id} student={profileStudent} /> : null}
     </div>
   )
 }

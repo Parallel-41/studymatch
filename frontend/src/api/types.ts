@@ -21,3 +21,17 @@ export type StudentAttempt = {
 }
 
 export type StudentAttemptDraft = Omit<StudentAttempt, 'id'>
+
+export type CompetencyContribution = {
+  courseUnit: string
+  grade: number
+  weight: number
+  recencyFactor: number
+  percentageOfLevel: number
+}
+
+export type CompetencyExplanation = {
+  level: number
+  contributions: CompetencyContribution[]
+  selfAssessmentShare: number
+}

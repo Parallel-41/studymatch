@@ -1,4 +1,10 @@
-import type { HealthResponse, Student, StudentAttempt, StudentAttemptDraft } from './types'
+import type {
+  CompetencyExplanation,
+  HealthResponse,
+  Student,
+  StudentAttempt,
+  StudentAttemptDraft,
+} from './types'
 
 export type StudentDraft = Omit<Student, 'id'>
 
@@ -37,6 +43,15 @@ const mockAttempts: Record<number, StudentAttempt[]> = {
     { id: 2, course: 'Databases', academicYear: '2024/2025', semester: 1, grade: 18 },
     { id: 3, course: 'Software Engineering', academicYear: '2024/2025', semester: 2, grade: 17 },
   ],
+}
+
+const mockCompetencyExplanation: CompetencyExplanation = {
+  level: 3.6,
+  contributions: [
+    { courseUnit: 'Algorithms', grade: 16, weight: 0.45, recencyFactor: 0.9, percentageOfLevel: 35 },
+    { courseUnit: 'Software Engineering', grade: 17, weight: 0.35, recencyFactor: 0.8, percentageOfLevel: 30 },
+  ],
+  selfAssessmentShare: 35,
 }
 
 const matchQuery = (student: Student, query: string) => {
@@ -156,6 +171,11 @@ export const api = {
     getJson<StudentAttempt[]>(
       `/api/students/${studentId}/attempts`,
       mockAttempts[studentId] ?? [],
+    ),
+  competencyExplanation: (studentId: number, competencyCode: string) =>
+    getJson<CompetencyExplanation>(
+      `/api/students/${studentId}/profile/competencies/${encodeURIComponent(competencyCode)}/explanation`,
+      mockCompetencyExplanation,
     ),
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const payload: StudentAttempt = { ...attempt, id: Date.now() }
