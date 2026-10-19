@@ -9,6 +9,14 @@ import java.util.Optional;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
+    boolean existsByNumber(String number);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByNumberAndIdNot(String number, Long id);
+
+    boolean existsByEmailAndIdNot(String email, Long id);
+
     @Override
     @EntityGraph(attributePaths = "degreeProgram")
     List<Student> findAll();
