@@ -1,3 +1,4 @@
+
 package pt.upt.studymatch.common.api;
 
 import jakarta.validation.ConstraintViolationException;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +25,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger LOGGER =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final Clock clock;
 
@@ -40,9 +43,11 @@ public class GlobalExceptionHandler {
             .map(this::formatFieldError)
             .distinct()
             .collect(Collectors.joining("; "));
+
         if (message.isBlank()) {
             message = "Request validation failed.";
         }
+
         return response(HttpStatus.BAD_REQUEST, message, request);
     }
 
@@ -55,7 +60,11 @@ public class GlobalExceptionHandler {
         Exception exception,
         WebRequest request
     ) {
-        return response(HttpStatus.BAD_REQUEST, "Invalid request data.", request);
+        return response(
+            HttpStatus.BAD_REQUEST,
+            "Invalid request data.",
+            request
+        );
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -63,7 +72,11 @@ public class GlobalExceptionHandler {
         IllegalArgumentException exception,
         WebRequest request
     ) {
-        return response(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+        return response(
+            HttpStatus.BAD_REQUEST,
+            exception.getMessage(),
+            request
+        );
     }
 
     @ExceptionHandler(StudentNotFoundException.class)
@@ -71,7 +84,11 @@ public class GlobalExceptionHandler {
         StudentNotFoundException exception,
         WebRequest request
     ) {
-        return response(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+        return response(
+            HttpStatus.NOT_FOUND,
+            exception.getMessage(),
+            request
+        );
     }
 
     @ExceptionHandler(DuplicateStudentException.class)
@@ -79,7 +96,11 @@ public class GlobalExceptionHandler {
         DuplicateStudentException exception,
         WebRequest request
     ) {
-        return response(HttpStatus.CONFLICT, exception.getMessage(), request);
+        return response(
+            HttpStatus.CONFLICT,
+            exception.getMessage(),
+            request
+        );
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -99,7 +120,26 @@ public class GlobalExceptionHandler {
         Exception exception,
         WebRequest request
     ) {
-        LOGGER.error("Unexpected API error for {}", request.getDescription(false), exception);
+        if (exception instanceof ErrorResponse errorResponse) {
+            HttpStatus status = HttpStatus.resolve(
+                errorResponse.getStatusCode().value()
+            );
+
+            if (status != null && status.is4xxClientError()) {
+                return response(
+                    status,
+                    status.getReasonPhrase(),
+                    request
+                );
+            }
+        }
+
+        LOGGER.error(
+            "Unexpected API error for {}",
+            request.getDescription(false),
+            exception
+        );
+
         return response(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "An unexpected error occurred.",
@@ -117,6 +157,7 @@ public class GlobalExceptionHandler {
         WebRequest request
     ) {
         String path = request.getDescription(false).replace("uri=", "");
+
         ApiError error = new ApiError(
             Instant.now(clock),
             status.value(),
@@ -124,6 +165,7 @@ public class GlobalExceptionHandler {
             message,
             path
         );
+
         return ResponseEntity.status(status).body(error);
     }
 }
