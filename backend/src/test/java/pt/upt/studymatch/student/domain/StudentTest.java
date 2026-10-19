@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StudentTest {
 
@@ -31,6 +32,31 @@ class StudentTest {
             registrationYear,
             program
         );
+    }
+
+
+    @Test
+    void constructorRejectsBlankRequiredFields() {
+        DegreeProgram program = new DegreeProgram("LEI", "Licenciatura em Engenharia Informática");
+
+        assertThrows(IllegalArgumentException.class, () -> new Student(
+            " ", "João Silva", "joao@example.com", 2024, program
+        ));
+        assertThrows(IllegalArgumentException.class, () -> new Student(
+            "2024001", " ", "joao@example.com", 2024, program
+        ));
+    }
+
+    @Test
+    void constructorRejectsInvalidEmailAndRegistrationYear() {
+        DegreeProgram program = new DegreeProgram("LEI", "Licenciatura em Engenharia Informática");
+
+        assertThrows(IllegalArgumentException.class, () -> new Student(
+            "2024001", "João Silva", "not-an-email", 2024, program
+        ));
+        assertThrows(IllegalArgumentException.class, () -> new Student(
+            "2024001", "João Silva", "joao@example.com", 1899, program
+        ));
     }
 
     @Test

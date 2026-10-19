@@ -1,14 +1,32 @@
+
 package pt.upt.studymatch.common.api;
 
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import pt.upt.studymatch.student.application.DuplicateStudentException;
 import pt.upt.studymatch.student.application.StudentNotFoundException;
+
 import java.time.Clock;
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final Clock clock;
 
@@ -16,21 +34,138 @@ public class GlobalExceptionHandler {
         this.clock = clock;
     }
 
-    @ExceptionHandler(StudentNotFoundException.class)
-    public org.springframework.http.ResponseEntity<ApiError> handleStudentNotFound(
-            StudentNotFoundException exception,
-            org.springframework.web.context.request.WebRequest request
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleRequestValidation(
+        MethodArgumentNotValidException exception,
+        WebRequest request
     ) {
-        ApiError error = new ApiError(
-                Instant.now(clock),
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                exception.getMessage(),
-                request.getDescription(false).replace("uri=", "")
+        String message = exception.getBindingResult().getFieldErrors().stream()
+            .map(this::formatFieldError)
+            .distinct()
+            .collect(Collectors.joining("; "));
+
+        if (message.isBlank()) {
+            message = "Request validation failed.";
+        }
+
+        return response(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler({
+        HttpMessageNotReadableException.class,
+        ConstraintViolationException.class,
+        MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ApiError> handleMalformedRequest(
+        Exception exception,
+        WebRequest request
+    ) {
+        return response(
+            HttpStatus.BAD_REQUEST,
+            "Invalid request data.",
+            request
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(
+        IllegalArgumentException exception,
+        WebRequest request
+    ) {
+        return response(
+            HttpStatus.BAD_REQUEST,
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(StudentNotFoundException.class)
+    public ResponseEntity<ApiError> handleStudentNotFound(
+        StudentNotFoundException exception,
+        WebRequest request
+    ) {
+        return response(
+            HttpStatus.NOT_FOUND,
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(DuplicateStudentException.class)
+    public ResponseEntity<ApiError> handleDuplicateStudent(
+        DuplicateStudentException exception,
+        WebRequest request
+    ) {
+        return response(
+            HttpStatus.CONFLICT,
+            exception.getMessage(),
+            request
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(
+        DataIntegrityViolationException exception,
+        WebRequest request
+    ) {
+        return response(
+            HttpStatus.CONFLICT,
+            "The request conflicts with existing data.",
+            request
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpectedError(
+        Exception exception,
+        WebRequest request
+    ) {
+        if (exception instanceof ErrorResponse errorResponse) {
+            HttpStatus status = HttpStatus.resolve(
+                errorResponse.getStatusCode().value()
+            );
+
+            if (status != null && status.is4xxClientError()) {
+                return response(
+                    status,
+                    status.getReasonPhrase(),
+                    request
+                );
+            }
+        }
+
+        LOGGER.error(
+            "Unexpected API error for {}",
+            request.getDescription(false),
+            exception
         );
 
-        return org.springframework.http.ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return response(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred.",
+            request
+        );
+    }
+
+    private String formatFieldError(FieldError error) {
+        return error.getField() + ": " + error.getDefaultMessage();
+    }
+
+    private ResponseEntity<ApiError> response(
+        HttpStatus status,
+        String message,
+        WebRequest request
+    ) {
+        String path = request.getDescription(false).replace("uri=", "");
+
+        ApiError error = new ApiError(
+            Instant.now(clock),
+            status.value(),
+            status.getReasonPhrase(),
+            message,
+            path
+        );
+
+        return ResponseEntity.status(status).body(error);
     }
 }
