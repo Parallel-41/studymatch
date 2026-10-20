@@ -1,9 +1,12 @@
 {
-  "level": 67.0,
-  "confidence": 0.4,
-  "selfAssessedShare": 0.6,
+  "competencyCode": "PROG_OO",
+  "level": 59.9,
+  "confidence": 0.61,
+  "evidenceLevel": 66.1,
+  "selfAssessedLevel": 50.0,
+  "selfAssessedShare": 0.39,
   "contributions": [
-    { "courseUnitCode": "BD1", "grade": 14, "weight": 0.8, "recency": 0.72, "share": 0.44 },
-    { "courseUnitCode": "BD2", "grade": 17, "weight": 0.6, "recency": 1.0, "share": 0.56 }
+    { "courseUnitCode": "PROG1", "ects": 6, "grade": 12, "weight": 1.0, "recency": 0.72, "points": 35.5, "share": 0.54 },
+    { "courseUnitCode": "POO", "ects": 6, "grade": 15, "weight": 0.5, "recency": 1.0, "points": 30.7, "share": 0.46 }
   ]
 }

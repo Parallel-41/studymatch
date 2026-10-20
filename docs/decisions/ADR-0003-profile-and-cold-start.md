@@ -16,18 +16,20 @@ The Sprint 2 plan left five open questions: A4 (stored vs computed profile) and 
 
   | Area | Competencies |
   |---|---|
-  | `PROG` Programming | `OOP`, `JAVA`, `DSA` |
-  | `DB` Databases | `SQL`, `MODEL` |
-  | `WEB` Web | `FRONT`, `BACK` |
-  | `QUAL` Software quality | `TEST`, `VCS`, `ARCH` |
-  | `MATH` Mathematics | `DMATH`, `STAT` |
-  | `SOFT` Soft skills | `TEAM`, `COMM`, `PM` |
+  | `PROG` Programming | `PROG_OO`, `PROG_ALG`, `PROG_ARCH` |
+  | `DB` Databases | `DB_SQL`, `DB_MODEL` |
+  | `WEB` Web Development | `WEB_FE`, `WEB_BE` |
+  | `QUAL` Software Quality | `QUAL_TEST`, `QUAL_CI`, `QUAL_REQ` |
+  | `MATH` Mathematics & Logic | `MATH_DISC`, `MATH_STAT` |
+  | `SOFT` Soft Skills & Teamwork | `SOFT_COMM`, `SOFT_TEAM`, `SOFT_LEAD` |
+
+  The source of truth for the codes is `V4__competency_catalogue.sql`; changing a code needs a new migration and an update of this table and of `frontend/src/api/examples/`.
 
 - **Course units and their weights belong to a degree programme.** A course unit contributes to one or more competencies with a weight in ]0, 1] (`CourseUnitWeight`). Sprint 2 loads LEI data only.
 - The profile shows **only the areas with at least one weight in the student's programme**, so a future programme without e.g. `WEB` units does not show an empty `WEB` area.
 - Self-assessment is **per area** (A6): about 6 questions for a new student. Every competency uses the self-assessed level of its area.
 
-Implemented in: #46 (catalogue, V4), #47 (weights + demo data, V6) — _PR links added when merged_.
+Implemented in: #46 → PR #78 (catalogue, V4); #47 → PR #82 (weights, V6) and PR #84 (LEI course units, weights and demo history, V7).
 
 ## 2. Decisions
 
@@ -36,7 +38,7 @@ Implemented in: #46 (catalogue, V4), #47 (weights + demo data, V6) — _PR links
 **Decision:** **(2) computed on demand.** `StudentProfile`, `CompetencyLevel` and `AreaLevel` are value objects (records), with no tables.
 **Why:** a stored profile can show stale values when a grade is added or corrected live (demo scenario); the dataset is small (one student, ~30 course units), so computing is cheap; pure functions are easy to test.
 **Revisit when:** profile computation becomes measurably slow (performance tests, Sprint 3) — then cache, never store as source of truth.
-_Implemented in: #49 — PR link._
+_Implemented in: #49 — PR link added when merged._
 
 ### F1 — What is a pass with 10 worth?
 **Options:** (1) `(g − 10) / 10 × 100` → 10 gives 0, the same as "knows nothing"; (2) linear 10 → 50, 20 → 100.
@@ -47,14 +49,14 @@ _Implemented in: #49 — PR link._
 |---|---|---|---|---|---|---|---|
 | Score | 50 | 60 | 70 | 75 | 80 | 90 | 100 |
 
-_Implemented in: #48 — PR link._
+_Implemented in: #48 → PR #83 (`ProfileCalculator.score`)._
 
 ### F2 — Failed attempts
 **Options:** (1) ignore them; (2) use them to lower the level; (3) use them to lower confidence.
 **Decision:** **(1) for Sprint 2.** Only the best passing grade of each course unit counts (`EvidenceGrade` has no attempt count). A course unit with no passing grade gives no evidence.
 **Why:** keeps the `EvidenceGrade` contract (#48) and the explanation simple; lowering the level would punish students who failed and then passed well.
 **Revisit in Sprint 3:** option (3), adding `failedAttempts` to `EvidenceGrade` and reducing confidence.
-_Implemented in: #42, #48 — PR links._
+_Implemented in: #42 → PR #74 (best passing grade per course unit); #48 → PR #83._
 
 ### F3 — Recency
 **Problem:** a recency factor inside a weighted average cancels out when all grades are equally old, so old-only evidence would look as reliable as recent evidence.
@@ -72,7 +74,7 @@ evidenceEcts_c  = Σ w_i               (recency-discounted, weighted ECTS)
 ```
 
 No passed unit for `c` → `evidenceLevel_c` is empty (never 0).
-_Implemented in: #48 — PR link._
+_Implemented in: #48 → PR #83 (`ProfileCalculator.recency`, `evidenceEcts`)._
 
 ### F4 — When evidence takes over from cold start (α)
 **Options:** (1) `α = min(1, ECTS / 30)` with raw ECTS of all units — one semester is enough for every competency, even the ones never taught; (2) α per competency, from the weighted, recency-discounted ECTS of F3.
@@ -91,16 +93,18 @@ confidence_c = α_c
 | yes | none | `level = evidenceLevel`, `confidence = α` |
 | yes | yes | blend above, `confidence = α` |
 
+Implementation: `CompetencyLevel ColdStartPolicy.blend(String competencyCode, Optional<Level> evidence, double evidenceEcts, Optional<Level> selfAssessed)` — `evidenceEcts` is a `double` because the weighted, recency-discounted ECTS of F3 have decimals.
+
 **Why:** a 1st-year student starts on self-assessment and moves to evidence competency by competency, as units that teach it are passed; old-only evidence counts less (F3). The threshold is a constant in `ColdStartPolicy`, so it can be tuned after the demo.
-_Implemented in: #53 — PR link._
+_Implemented in: #53 → PR #76 (`ColdStartPolicy`, merged into `main` with PR #83)._
 
 ### Areas
 `areaLevel = mean of the levels of its competencies that have data`; `areaConfidence = mean of their confidences`. An area with no competency data has `level = null`.
 
 ## 3. Worked example (for `ProfileCalculatorTest`)
-Competency `OOP` (area `PROG`), self-assessment `PROG = 50`:
+Competency `PROG_OO` (area `PROG`), self-assessment `PROG = 50`:
 
-| Unit | ECTS | Best grade | Weight for OOP | Semesters ago | r | w | score |
+| Unit | ECTS | Best grade | Weight for PROG_OO | Semesters ago | r | w | score |
 |---|---|---|---|---|---|---|---|
 | A | 6 | 12 | 1.0 | 2 | 0.7225 | 4.335 | 60 |
 | B | 6 | 15 | 0.5 | 0 | 1.0 | 3.000 | 75 |
@@ -111,7 +115,7 @@ evidenceEcts  = 7.335   →   α = 7.335 / 12 = 0.611
 level         = 0.611 × 66.1 + 0.389 × 50 = 59.9     confidence = 0.61
 ```
 
-Explanation (#56): unit A contributes `4.335 × 60 / 7.335 = 35.5` and unit B `30.7`; the contributions add up to the evidence level (66.1), and the self-assessment share is `1 − α = 0.39`.
+Explanation (#56): each unit's contribution is given in **points** (`w × score / Σw`) and as a **share** of the evidence level (`points / evidenceLevel`, 0–1). Unit A contributes `4.335 × 60 / 7.335 = 35.5` points (share 0.54) and unit B `30.7` points (share 0.46); the points add up to the evidence level (66.1, up to rounding) and the shares to 1. The self-assessment share of the final level is `1 − α = 0.39`. See `frontend/src/api/examples/explanation.json`.
 
 ## Justification
 - **Suitability:** answers the product questions of the Sprint 2 plan (passing students never look empty, history replaces self-assessment gradually).
