@@ -58,17 +58,14 @@ public class ProfileCalculator {
         Objects.requireNonNull(selfAssessmentByArea, "selfAssessmentByArea");
         Objects.requireNonNull(competencies, "competencies");
 
-        Map<String, EvidenceGrade> passedUnits = evidence.stream()
-            .filter(e -> e.grade().isPassing())
-            .collect(Collectors.toMap(EvidenceGrade::courseUnitCode, Function.identity(),
-                (a, b) -> a.grade().value() >= b.grade().value() ? a : b));
-
+        Map<String, EvidenceGrade> passedUnits = passedUnits(evidence);
         List<CompetencyLevel> competencyLevels = new ArrayList<>();
         Map<String, List<CompetencyLevel>> levelsByArea = new LinkedHashMap<>();
 
         for (Competency competency : competencies) {
             String areaCode = competency.getArea().getCode();
-            CompetencyLevel level = levelFor(competency.getCode(), passedUnits, weights,
+            List<Contribution> contributions = contributionsFor(competency.getCode(), passedUnits, weights);
+            CompetencyLevel level = blend(competency.getCode(), contributions,
                 Optional.ofNullable(selfAssessmentByArea.get(areaCode)));
             competencyLevels.add(level);
             levelsByArea.computeIfAbsent(areaCode, k -> new ArrayList<>()).add(level);
@@ -79,6 +76,29 @@ public class ProfileCalculator {
             .toList();
 
         return new StudentProfile(areaLevels, competencyLevels);
+    }
+
+    /**
+     * #56: explains one competency with the same formulas as {@link #calculate}, so the explanation
+     * always matches the profile.
+     */
+    public CompetencyExplanation explain(String competencyCode,
+                                         List<EvidenceGrade> evidence,
+                                         List<CourseUnitWeight> weights,
+                                         Optional<Level> selfAssessed) {
+        Objects.requireNonNull(competencyCode, "competencyCode");
+        List<Contribution> contributions = contributionsFor(competencyCode, passedUnits(evidence), weights);
+        CompetencyLevel level = blend(competencyCode, contributions, selfAssessed);
+
+        double selfAssessedShare;
+        if (!level.hasData() || selfAssessed.isEmpty()) {
+            selfAssessedShare = 0;
+        } else if (contributions.isEmpty()) {
+            selfAssessedShare = 1;
+        } else {
+            selfAssessedShare = 1 - level.confidence().value();
+        }
+        return new CompetencyExplanation(level, contributions, selfAssessedShare);
     }
 
     /** F1: value of a passing grade on the 0–100 scale (10 → 50, 20 → 100). */
@@ -97,30 +117,49 @@ public class ProfileCalculator {
         return Math.pow(RECENCY_FACTOR, semestersAgo);
     }
 
-    private CompetencyLevel levelFor(String competencyCode,
-                                     Map<String, EvidenceGrade> passedUnits,
-                                     List<CourseUnitWeight> weights,
-                                     Optional<Level> selfAssessed) {
-        double weightedScores = 0;
-        double evidenceEcts = 0;
+    private static Map<String, EvidenceGrade> passedUnits(List<EvidenceGrade> evidence) {
+        Objects.requireNonNull(evidence, "evidence");
+        return evidence.stream()
+            .filter(e -> e.grade().isPassing())
+            .collect(Collectors.toMap(EvidenceGrade::courseUnitCode, Function.identity(),
+                (a, b) -> a.grade().value() >= b.grade().value() ? a : b, LinkedHashMap::new));
+    }
 
+    /** F3: one contribution per passed course unit that has a weight for the competency. */
+    private static List<Contribution> contributionsFor(String competencyCode,
+                                                      Map<String, EvidenceGrade> passedUnits,
+                                                      List<CourseUnitWeight> weights) {
+        Objects.requireNonNull(weights, "weights");
+        record Part(EvidenceGrade unit, CourseUnitWeight weight, double recency, double effectiveWeight, double score) {
+        }
+        List<Part> parts = new ArrayList<>();
         for (CourseUnitWeight weight : weights) {
-            if (!weight.competencyCode().equals(competencyCode)) {
-                continue;
-            }
             EvidenceGrade unit = passedUnits.get(weight.courseUnitCode());
-            if (unit == null) {
+            if (!weight.competencyCode().equals(competencyCode) || unit == null) {
                 continue;
             }
-            double w = unit.ects() * weight.weight() * recency(unit.semestersAgo());
-            weightedScores += w * score(unit.grade());
-            evidenceEcts += w;
+            double r = recency(unit.semestersAgo());
+            parts.add(new Part(unit, weight, r, unit.ects() * weight.weight() * r, score(unit.grade())));
         }
 
-        Optional<Level> evidenceLevel = evidenceEcts > 0
-            ? Optional.of(level(weightedScores / evidenceEcts))
-            : Optional.empty();
+        double totalWeight = parts.stream().mapToDouble(Part::effectiveWeight).sum();
+        double totalWeightedScore = parts.stream().mapToDouble(p -> p.effectiveWeight() * p.score()).sum();
 
+        return parts.stream()
+            .map(p -> new Contribution(p.unit().courseUnitCode(), p.unit().ects(), p.unit().grade().value(),
+                p.weight().weight(), p.recency(), p.effectiveWeight(),
+                p.effectiveWeight() * p.score() / totalWeight,
+                p.effectiveWeight() * p.score() / totalWeightedScore))
+            .toList();
+    }
+
+    /** Evidence level = sum of the points; evidenceEcts = sum of the effective weights; F4 in ColdStartPolicy. */
+    private CompetencyLevel blend(String competencyCode, List<Contribution> contributions,
+                                  Optional<Level> selfAssessed) {
+        double evidenceEcts = contributions.stream().mapToDouble(Contribution::effectiveWeight).sum();
+        Optional<Level> evidenceLevel = contributions.isEmpty()
+            ? Optional.empty()
+            : Optional.of(level(contributions.stream().mapToDouble(Contribution::points).sum()));
         return coldStartPolicy.blend(competencyCode, evidenceLevel, evidenceEcts, selfAssessed);
     }
 

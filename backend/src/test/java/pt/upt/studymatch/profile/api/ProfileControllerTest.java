@@ -15,7 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import pt.upt.studymatch.common.api.GlobalExceptionHandler;
 import pt.upt.studymatch.common.config.ClockConfig;
 import pt.upt.studymatch.profile.application.ProfileService;
+import pt.upt.studymatch.profile.application.CompetencyNotFoundException;
+import pt.upt.studymatch.profile.application.ExplanationView;
 import pt.upt.studymatch.profile.application.ProfileView;
+import pt.upt.studymatch.profile.domain.Contribution;
 import pt.upt.studymatch.student.application.StudentNotFoundException;
 
 /** The response must keep the structure of frontend/src/api/examples/profile.json. */
@@ -61,6 +64,40 @@ class ProfileControllerTest {
         when(profileService.profileFor(99L)).thenThrow(new StudentNotFoundException(99L));
 
         mockMvc.perform(get("/api/students/99/profile"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void returnsExplanationWithTheSameStructureAsTheExample() throws Exception {
+        when(profileService.explanationFor(1L, "PROG_OO")).thenReturn(new ExplanationView(
+            "PROG_OO", "Object-Oriented Programming", 59.8625, 0.61125, 66.13496, 50.0, 0.38875,
+            List.of(new Contribution("PROG1", 6, 12, 1.0, 0.7225, 4.335, 35.4601, 0.53620),
+                new Contribution("POO", 6, 15, 0.5, 1.0, 3.0, 30.6748, 0.46380))));
+
+        mockMvc.perform(get("/api/students/1/profile/competencies/PROG_OO/explanation"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.competencyCode").value("PROG_OO"))
+            .andExpect(jsonPath("$.level").value(59.9))
+            .andExpect(jsonPath("$.confidence").value(0.61))
+            .andExpect(jsonPath("$.evidenceLevel").value(66.1))
+            .andExpect(jsonPath("$.selfAssessedLevel").value(50.0))
+            .andExpect(jsonPath("$.selfAssessedShare").value(0.39))
+            .andExpect(jsonPath("$.contributions[0].courseUnitCode").value("PROG1"))
+            .andExpect(jsonPath("$.contributions[0].ects").value(6))
+            .andExpect(jsonPath("$.contributions[0].grade").value(12))
+            .andExpect(jsonPath("$.contributions[0].weight").value(1.0))
+            .andExpect(jsonPath("$.contributions[0].recency").value(0.72))
+            .andExpect(jsonPath("$.contributions[0].points").value(35.5))
+            .andExpect(jsonPath("$.contributions[0].share").value(0.54))
+            .andExpect(jsonPath("$.contributions[1].share").value(0.46));
+    }
+
+    @Test
+    void unknownCompetencyReturns404() throws Exception {
+        when(profileService.explanationFor(1L, "XYZ")).thenThrow(new CompetencyNotFoundException("XYZ"));
+
+        mockMvc.perform(get("/api/students/1/profile/competencies/XYZ/explanation"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value(404));
     }

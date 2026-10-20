@@ -181,4 +181,60 @@ class ProfileCalculatorTest {
         assertThat(oop.level().value()).isCloseTo(59.9, within(0.05));
         assertThat(oop.selfAssessedLevel().value()).isEqualTo(50.0);
     }
+
+    // #56 — explanation
+
+    @Test
+    void explanationOfAdrExampleMatchesTheProfile() {
+        List<EvidenceGrade> evidence = List.of(evidence("A", 6, 12, 2), evidence("B", 6, 15, 0));
+        List<CourseUnitWeight> weights = List.of(
+            new CourseUnitWeight("A", "PROG_OO", 1.0), new CourseUnitWeight("B", "PROG_OO", 0.5));
+
+        CompetencyExplanation explanation =
+            calculator.explain("PROG_OO", evidence, weights, java.util.Optional.of(new Level(50)));
+        CompetencyLevel inProfile = calculator.calculate(evidence, weights, Map.of("PROG", new Level(50)), CATALOGUE)
+            .competency("PROG_OO").orElseThrow();
+
+        assertThat(explanation.level()).isEqualTo(inProfile);
+        assertThat(explanation.contributions()).extracting(Contribution::courseUnitCode).containsExactly("A", "B");
+        assertThat(explanation.contributions().get(0).points()).isCloseTo(35.46, within(0.01));
+        assertThat(explanation.contributions().get(1).points()).isCloseTo(30.67, within(0.01));
+        assertThat(explanation.contributions().get(0).recency()).isCloseTo(0.7225, within(1e-9));
+        assertThat(explanation.selfAssessedShare()).isCloseTo(0.389, within(0.001));
+    }
+
+    @Test
+    void contributionPointsAddUpToTheEvidenceLevelAndSharesToOne() {
+        CompetencyExplanation explanation = calculator.explain("PROG_OO",
+            List.of(evidence("A", 6, 12, 2), evidence("B", 6, 15, 0), evidence("C", 5, 19, 1)),
+            List.of(new CourseUnitWeight("A", "PROG_OO", 1.0), new CourseUnitWeight("B", "PROG_OO", 0.5),
+                new CourseUnitWeight("C", "PROG_OO", 0.8)),
+            java.util.Optional.empty());
+
+        double points = explanation.contributions().stream().mapToDouble(Contribution::points).sum();
+        double shares = explanation.contributions().stream().mapToDouble(Contribution::share).sum();
+        assertThat(points).isCloseTo(explanation.level().evidenceLevel().value(), within(1e-9));
+        assertThat(shares).isCloseTo(1.0, within(1e-9));
+        assertThat(explanation.selfAssessedShare()).isZero();
+    }
+
+    @Test
+    void explanationWithSelfAssessmentOnlyHasNoContributions() {
+        CompetencyExplanation explanation = calculator.explain("PROG_OO", List.of(), List.of(),
+            java.util.Optional.of(new Level(40)));
+
+        assertThat(explanation.contributions()).isEmpty();
+        assertThat(explanation.level().level().value()).isEqualTo(40.0);
+        assertThat(explanation.selfAssessedShare()).isEqualTo(1.0);
+    }
+
+    @Test
+    void explanationWithoutDataHasNoLevel() {
+        CompetencyExplanation explanation = calculator.explain("PROG_OO", List.of(), List.of(),
+            java.util.Optional.empty());
+
+        assertThat(explanation.level().hasData()).isFalse();
+        assertThat(explanation.contributions()).isEmpty();
+        assertThat(explanation.selfAssessedShare()).isZero();
+    }
 }
