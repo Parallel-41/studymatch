@@ -122,3 +122,14 @@ classDiagram
     
     Student "1" -- "0..*" PeerReview
     PeerReview "0..*" -- "1" Student
+    
+## Business Rules
+
+* **R1:** La nota de aprobado es ≥ 10.
+* **R2:** Cuenta la mejor nota aprobada de cada UC (Unidad Curricular).
+* **R3:** El perfil se calcula en cada petición (A4 - no se almacena en base de datos).
+* **R4:** score = 50 + (nota − 10) × 5 (F1).
+* **R5:** Los suspensos no cuentan (F2).
+* **R6:** Recencia = 0.85^semestres (F3).
+* **R7:** α = min(1, ECTS ponderados / 12) y confianza = α (F4).
+* **R8:** El estado "sin datos" se representa como `null`, nunca como 0.
