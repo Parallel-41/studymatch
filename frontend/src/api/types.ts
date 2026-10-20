@@ -20,7 +20,9 @@ export type StudentAttempt = {
   grade: number
 }
 
-export type StudentAttemptDraft = Omit<StudentAttempt, 'id'>
+export type AssessmentSeason = 'NORMAL' | 'RECURSO' | 'ESPECIAL' | 'MELHORIA'
+
+export type StudentAttemptDraft = Omit<StudentAttempt, 'id'> & { season?: AssessmentSeason }
 
 export type CompetencyContribution = {
   courseUnit: string
