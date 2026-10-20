@@ -169,4 +169,15 @@ class StudentControllerTest {
             "LEI"
         ));
     }
+
+   @Test
+    void getStudentsWithQueryReturnsFilteredList() throws Exception {
+        when(studentService.search("2024", null)).thenReturn(List.of(student(1L)));
+
+        mockMvc.perform(get("/api/students").param("q", "2024"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].number").value("2024001"));
+    }
+
+    
 }

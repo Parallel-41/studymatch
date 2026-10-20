@@ -24,4 +24,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     @Override
     @EntityGraph(attributePaths = "degreeProgram")
     Optional<Student> findById(Long id);
+
+    @EntityGraph(attributePaths = "degreeProgram")
+    List<Student> findByNameContainingIgnoreCaseOrNumberContainingIgnoreCase(String nameQuery, String numberQuery);
 }

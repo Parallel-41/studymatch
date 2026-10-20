@@ -14,6 +14,7 @@ import pt.upt.studymatch.student.infrastructure.StudentRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -152,5 +153,27 @@ class StudentServiceTest {
 
     private StudentCommand command(String number, String email, Integer year) {
         return new StudentCommand(number, "João Silva", email, year, "LEI");
+    }
+
+    @Test
+    void searchFiltersByNameOrNumberAndYear() {
+        Student s1 = new Student("2024001", "Ana Silva", "ana@example.com", 2024, degreeProgram);
+        Student s2 = new Student("2023002", "Carlos Costa", "carlos@example.com", 2023, degreeProgram);
+        
+        when(studentRepository.findByNameContainingIgnoreCaseOrNumberContainingIgnoreCase("Ana", "Ana"))
+            .thenReturn(List.of(s1));
+
+        List<Student> result = studentService.search("Ana", null);
+        assertEquals(1, result.size());
+        assertEquals("Ana Silva", result.get(0).getName());
+    }
+
+    @Test
+    void searchReturnsEmptyListWhenNoMatch() {
+        when(studentRepository.findByNameContainingIgnoreCaseOrNumberContainingIgnoreCase("Unknown", "Unknown"))
+            .thenReturn(List.of());
+
+        List<Student> result = studentService.search("Unknown", null);
+        assertEquals(0, result.size());
     }
 }
