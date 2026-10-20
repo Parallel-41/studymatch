@@ -18,4 +18,9 @@ public class ProfileController {
     public ProfileResponse getProfile(@PathVariable long id) {
         return ProfileResponse.from(profileService.profileFor(id));
     }
+
+    @GetMapping("/api/students/{id}/profile/competencies/{code}/explanation")
+    public ExplanationResponse getExplanation(@PathVariable long id, @PathVariable String code) {
+        return ExplanationResponse.from(profileService.explanationFor(id, code));
+    }
 }

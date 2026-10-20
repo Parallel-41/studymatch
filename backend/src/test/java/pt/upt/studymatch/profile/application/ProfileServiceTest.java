@@ -130,4 +130,24 @@ class ProfileServiceTest {
         assertThat(alg.confidence()).isZero();
         assertThat(profile.competencies().get(0).level()).isCloseTo(0.5 * 70 + 0.5 * 40, within(1e-9));
     }
+
+    @Test
+    void explanationListsTheContributionOfEachCourseUnit() {
+        ExplanationView explanation = service.explanationFor(1L, "PROG_OO");
+
+        assertThat(explanation.competencyName()).isEqualTo("Object-Oriented Programming");
+        assertThat(explanation.level()).isCloseTo(70.0, within(1e-9));
+        assertThat(explanation.contributions()).hasSize(1);
+        assertThat(explanation.contributions().get(0).courseUnitCode()).isEqualTo("PROG1");
+        assertThat(explanation.contributions().get(0).points()).isCloseTo(70.0, within(1e-9));
+        assertThat(explanation.contributions().get(0).share()).isCloseTo(1.0, within(1e-9));
+    }
+
+    @Test
+    void explanationOfCompetencyOutsideTheProgrammeThrowsNotFound() {
+        assertThatThrownBy(() -> service.explanationFor(1L, "DB_SQL"))
+            .isInstanceOf(CompetencyNotFoundException.class);
+        assertThatThrownBy(() -> service.explanationFor(1L, "UNKNOWN"))
+            .isInstanceOf(CompetencyNotFoundException.class);
+    }
 }

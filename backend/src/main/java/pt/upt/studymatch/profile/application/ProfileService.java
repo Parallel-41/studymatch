@@ -3,6 +3,7 @@ package pt.upt.studymatch.profile.application;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ import pt.upt.studymatch.competency.application.CompetencyCatalogueService;
 import pt.upt.studymatch.competency.domain.Competency;
 import pt.upt.studymatch.competency.domain.CourseUnitWeight;
 import pt.upt.studymatch.competency.infrastructure.CompetencyRepository;
+import pt.upt.studymatch.profile.domain.CompetencyExplanation;
+import pt.upt.studymatch.profile.domain.CompetencyLevel;
 import pt.upt.studymatch.profile.domain.ProfileCalculator;
 import pt.upt.studymatch.profile.domain.StudentProfile;
 import pt.upt.studymatch.student.application.StudentNotFoundException;
@@ -56,6 +59,33 @@ public class ProfileService {
     }
 
     public ProfileView profileFor(long studentId) {
+        Inputs inputs = inputsFor(studentId);
+        StudentProfile profile = calculator.calculate(inputs.evidence(), inputs.weights(),
+            inputs.selfAssessment(), inputs.competencies());
+        return toView(profile, inputs.competencies());
+    }
+
+    /** #56: contribution of each course unit and of the self-assessment to one competency. */
+    public ExplanationView explanationFor(long studentId, String competencyCode) {
+        Inputs inputs = inputsFor(studentId);
+        Competency competency = inputs.competencies().stream()
+            .filter(c -> c.getCode().equals(competencyCode))
+            .findFirst()
+            .orElseThrow(() -> new CompetencyNotFoundException(competencyCode));
+
+        CompetencyExplanation explanation = calculator.explain(competencyCode, inputs.evidence(), inputs.weights(),
+            Optional.ofNullable(inputs.selfAssessment().get(competency.getArea().getCode())));
+        CompetencyLevel level = explanation.level();
+        return new ExplanationView(competencyCode, competency.getName(), value(level.level()),
+            level.confidence().value(), value(level.evidenceLevel()), value(level.selfAssessedLevel()),
+            explanation.selfAssessedShare(), explanation.contributions());
+    }
+
+    private record Inputs(List<EvidenceGrade> evidence, List<CourseUnitWeight> weights,
+                          Map<String, Level> selfAssessment, List<Competency> competencies) {
+    }
+
+    private Inputs inputsFor(long studentId) {
         Student student = studentRepository.findById(studentId)
             .orElseThrow(() -> new StudentNotFoundException(studentId));
 
@@ -67,12 +97,8 @@ public class ProfileService {
             ? List.of()
             : competencyCatalogueService.weightsFor(programmeUnits);
 
-        List<Competency> competencies = programmeCompetencies(weights);
-        List<EvidenceGrade> evidence = academicHistoryService.evidenceGradesFor(studentId);
-        Map<String, Level> selfAssessment = selfAssessmentFor(studentId);
-
-        StudentProfile profile = calculator.calculate(evidence, weights, selfAssessment, competencies);
-        return toView(profile, competencies);
+        return new Inputs(academicHistoryService.evidenceGradesFor(studentId), weights,
+            selfAssessmentFor(studentId), programmeCompetencies(weights));
     }
 
     /**
