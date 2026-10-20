@@ -53,11 +53,8 @@ public class SelfAssessment {
     public Double getLevel() { return level; }
     public LocalDate getAssessedAt() { return assessedAt; }
 
-    public void updateLevel(Double newLevel) {
-        if (newLevel == null || newLevel < 0 || newLevel > 100) {
-            throw new IllegalArgumentException("Level must be between 0 and 100, got " + newLevel);
-        }
-        this.level = newLevel;
-        this.assessedAt = LocalDate.now();
+    public void updateLevel(double level, LocalDate assessedAt) {
+        this.level = level;
+        this.assessedAt = assessedAt;
     }
 }

@@ -5,5 +5,6 @@ CREATE TABLE self_assessment (
                                  level DOUBLE NOT NULL CHECK (level >= 0 AND level <= 100),
                                  assessed_at DATE NOT NULL,
                                  UNIQUE KEY uk_student_area (student_id, area_code),
-                                 FOREIGN KEY (student_id) REFERENCES student(id)
+                                 FOREIGN KEY (student_id) REFERENCES student(id),
+                                 CONSTRAINT fk_self_assessment_area FOREIGN KEY (area_code) REFERENCES competency_area(code)
 );
