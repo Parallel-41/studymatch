@@ -94,4 +94,21 @@ public class StudentService {
             throw new DuplicateStudentException();
         }
     }
+
+    public List<Student> search(String q, Integer year) {
+        List<Student> students;
+        if (q != null && !q.isBlank()) {
+            students = studentRepository.findByNameContainingIgnoreCaseOrNumberContainingIgnoreCase(q, q);
+        } else {
+            students = studentRepository.findAll();
+        }
+
+        if (year != null) {
+            return students.stream()
+                .filter(student -> student.currentYear(clock) == year)
+                .toList();
+        }
+
+        return students;
+    }
 }
