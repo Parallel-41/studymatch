@@ -30,7 +30,7 @@ public class StudentController {
         this.clock = clock;
     }
 
-   @GetMapping
+    @GetMapping
     public List<StudentResponse> getAllStudents(
         @RequestParam(required = false) String q,
         @RequestParam(required = false) Integer year
