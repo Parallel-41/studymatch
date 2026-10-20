@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class SelfAssessmentService {
+public class SelfAssessmentService implements SelfAssessmentProvider {
 
     private final SelfAssessmentRepository repository;
     private final CompetencyAreaRepository areaRepository;
@@ -29,7 +29,7 @@ public class SelfAssessmentService {
     }
 
     @Transactional(readOnly = true)
-
+    @Override
     public Map<String, Level> levelsByArea(long studentId) {
         return repository.findAllByStudentId(studentId).stream()
             .collect(Collectors.toMap(
