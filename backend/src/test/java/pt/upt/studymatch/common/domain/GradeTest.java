@@ -1,29 +1,38 @@
 package pt.upt.studymatch.common.domain;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GradeTest {
 
-    @ParameterizedTest
-    @ValueSource(ints = {0, 10, 20})
-    void acceptsGradesWithinRange(int value) {
-        assertThat(new Grade(value).value()).isEqualTo(value);
+    @Test
+    void acceptsMinimumGrade() {
+        assertEquals(0, new Grade(0).value());
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {-1, 21})
-    void rejectsGradesOutsideRange(int value) {
-        assertThatThrownBy(() -> new Grade(value)).isInstanceOf(IllegalArgumentException.class);
+    @Test
+    void acceptsMaximumGrade() {
+        assertEquals(20, new Grade(20).value());
     }
 
-    @ParameterizedTest
-    @CsvSource({"9,false", "10,true", "20,true", "0,false"})
-    void passesFromTen(int value, boolean passing) {
-        assertThat(new Grade(value).isPassing()).isEqualTo(passing);
+    @Test
+    void considersTenAsPassing() {
+        assertTrue(new Grade(10).isPassing());
+    }
+
+    @Test
+    void considersGradesBelowTenAsFailing() {
+        assertFalse(new Grade(9).isPassing());
+    }
+
+    @Test
+    void rejectsGradeBelowZero() {
+        assertThrows(IllegalArgumentException.class, () -> new Grade(-1));
+    }
+
+    @Test
+    void rejectsGradeAboveTwenty() {
+        assertThrows(IllegalArgumentException.class, () -> new Grade(21));
     }
 }
