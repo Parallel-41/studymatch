@@ -6,6 +6,15 @@ import type {
   StudentAttempt,
   StudentAttemptDraft,
 } from './types'
+import {
+  fromBackendExplanation,
+  fromBackendHistory,
+  fromBackendProfile,
+  toBackendAttempt,
+  type BackendExplanation,
+  type BackendHistory,
+  type BackendProfile,
+} from './mappers'
 
 export type StudentDraft = Omit<Student, 'id'>
 
@@ -183,29 +192,34 @@ export const api = {
       return payload
     }
   },
-  studentAttempts: (studentId: number) =>
-    getJson<StudentAttempt[]>(
-      `/api/students/${studentId}/attempts`,
-      mockAttempts[studentId] ?? [],
-    ),
-  competencyExplanation: (studentId: number, competencyCode: string) =>
-    getJson<CompetencyExplanation>(
+  studentAttempts: async (studentId: number) => {
+    const history = await getJson<BackendHistory | null>(`/api/students/${studentId}/history`, null)
+    return history ? fromBackendHistory(history) : (mockAttempts[studentId] ?? [])
+  },
+  competencyExplanation: async (studentId: number, competencyCode: string) => {
+    const explanation = await getJson<BackendExplanation | null>(
       `/api/students/${studentId}/profile/competencies/${encodeURIComponent(competencyCode)}/explanation`,
-      mockCompetencyExplanation,
-    ),
-  studentProfile: (studentId: number) =>
-    getJson<StudentProfileData>(
-      `/api/students/${studentId}/profile`,
-      mockStudentProfile,
-    ),
+      null,
+    )
+    return explanation ? fromBackendExplanation(explanation) : mockCompetencyExplanation
+  },
+  studentProfile: async (studentId: number) => {
+    const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
+    return profile ? fromBackendProfile(profile) : mockStudentProfile
+  },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
-    const payload: StudentAttempt = { ...attempt, id: Date.now() }
+    const { season, ...fields } = attempt
+    const payload: StudentAttempt = {
+      ...fields,
+      id: Date.now(),
+      course: season && season !== 'NORMAL' ? `${fields.course} (${season})` : fields.course,
+    }
 
     try {
       const response = await fetch(`/api/students/${studentId}/attempts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(attempt),
+        body: JSON.stringify(toBackendAttempt(attempt)),
       })
       const body = (await response.json().catch(() => null)) as
         | (StudentAttempt & { message?: string; code?: string; details?: unknown })
@@ -215,7 +229,7 @@ export const api = {
         throw new ApiError(body?.message ?? 'Unable to add attempt.', response.status, body?.code, body?.details)
       }
 
-      return (body ?? payload) as StudentAttempt
+      return payload
     } catch (error) {
       if (error instanceof ApiError) {
         throw error
