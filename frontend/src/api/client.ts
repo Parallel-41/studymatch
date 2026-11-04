@@ -1,5 +1,6 @@
 import type {
   CompetencyExplanation,
+  CourseUnit,
   HealthResponse,
   StudentProfileData,
   Student,
@@ -16,7 +17,31 @@ import {
   type BackendProfile,
 } from './mappers'
 
-export type StudentDraft = Omit<Student, 'id'>
+/** Body of POST and PUT /api/students (StudentRequest in the backend). */
+export type StudentDraft = {
+  number: string
+  name: string
+  email: string
+  registrationYear: number
+  degreeProgramCode: string
+}
+
+const academicYearStart = (now = new Date()) => (now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1)
+
+const draftToStudent = (id: number, draft: StudentDraft): Student => ({
+  id,
+  number: draft.number,
+  name: draft.name,
+  email: draft.email,
+  registrationYear: draft.registrationYear,
+  currentYear: academicYearStart() - draft.registrationYear + 1,
+  degreeProgram: { code: draft.degreeProgramCode, name: draft.degreeProgramCode },
+})
+
+const mockCourseUnits: CourseUnit[] = [
+  { code: 'DB1', name: 'Bases de Dados I', curricularYear: 2, semester: 1, ects: 6 },
+  { code: 'PROG1', name: 'Programação I', curricularYear: 1, semester: 1, ects: 6 },
+]
 
 export class ApiError extends Error {
   status?: number
@@ -134,14 +159,14 @@ export const api = {
 
     return getJson<Student[]>(path, fallback)
   },
-  createStudent: async (student: StudentDraft) => {
-    const payload = { ...student, id: Date.now() }
+  createStudent: async (draft: StudentDraft) => {
+    const payload = draftToStudent(Date.now(), draft)
 
     try {
       const response = await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(draft),
       })
       const body = (await response.json().catch(() => null)) as
         | (Student & { message?: string; code?: string; details?: unknown })
@@ -157,19 +182,18 @@ export const api = {
         throw error
       }
 
-      const createdStudent = { ...payload, id: payload.id ?? Date.now() }
-      mockStudents.unshift(createdStudent)
-      return createdStudent
+      mockStudents.unshift(payload)
+      return payload
     }
   },
-  updateStudent: async (student: Student) => {
-    const payload = { ...student }
+  updateStudent: async (id: number, draft: StudentDraft) => {
+    const payload = draftToStudent(id, draft)
 
     try {
-      const response = await fetch(`/api/students/${student.id}`, {
+      const response = await fetch(`/api/students/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(draft),
       })
       const body = (await response.json().catch(() => null)) as
         | (Student & { message?: string; code?: string; details?: unknown })
@@ -185,13 +209,14 @@ export const api = {
         throw error
       }
 
-      const index = mockStudents.findIndex((currentStudent) => currentStudent.id === student.id)
+      const index = mockStudents.findIndex((currentStudent) => currentStudent.id === id)
       if (index >= 0) {
         mockStudents[index] = payload
       }
       return payload
     }
   },
+  courseUnits: () => getJson<CourseUnit[]>('/api/course-units', mockCourseUnits),
   studentAttempts: async (studentId: number) => {
     const history = await getJson<BackendHistory | null>(`/api/students/${studentId}/history`, null)
     return history ? fromBackendHistory(history) : (mockAttempts[studentId] ?? [])

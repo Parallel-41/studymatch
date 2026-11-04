@@ -1,24 +1,15 @@
 import { type ChangeEvent, type FormEvent, useState } from 'react'
+import type { StudentDraft } from '../../api/client'
+import { academicYearStart, yearOfStudy } from './academicYear'
+import { DEGREE_PROGRAMMES } from './studentOptions'
 
-export type StudentFormValues = {
-  number: string
-  name: string
-  email: string
-  currentYear: number
-}
+export type StudentFormValues = StudentDraft
 
 type StudentFormProps = {
   initialValues?: Partial<StudentFormValues>
   onSubmit: (values: StudentFormValues) => Promise<void> | void
   onCancel: () => void
   submitLabel?: string
-}
-
-const defaultValues: StudentFormValues = {
-  number: '',
-  name: '',
-  email: '',
-  currentYear: 1,
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -29,10 +20,14 @@ function StudentForm({
   onCancel,
   submitLabel = 'Save student',
 }: StudentFormProps) {
+  const firstYear = academicYearStart()
   const [values, setValues] = useState<StudentFormValues>({
-    ...defaultValues,
+    number: '',
+    name: '',
+    email: '',
+    registrationYear: firstYear,
+    degreeProgramCode: DEGREE_PROGRAMMES[0].code,
     ...initialValues,
-    currentYear: Number(initialValues?.currentYear ?? defaultValues.currentYear),
   })
   const [errors, setErrors] = useState<Partial<Record<keyof StudentFormValues, string>>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -41,7 +36,7 @@ function StudentForm({
   const updateValue = (field: keyof StudentFormValues, rawValue: string) => {
     setValues((current) => ({
       ...current,
-      [field]: field === 'currentYear' ? Number(rawValue) : rawValue,
+      [field]: field === 'registrationYear' ? Number(rawValue) : rawValue,
     }))
     setErrors((current) => ({ ...current, [field]: undefined }))
     setSubmitError(null)
@@ -62,8 +57,13 @@ function StudentForm({
       nextErrors.email = 'Enter a valid email address.'
     }
 
-    if (!Number.isInteger(values.currentYear) || values.currentYear < 1 || values.currentYear > 5) {
-      nextErrors.currentYear = 'Current year must be between 1 and 5.'
+    const year = values.registrationYear
+    if (!Number.isInteger(year) || year < 1900 || year > firstYear) {
+      nextErrors.registrationYear = `Registration year must be between 1900 and ${firstYear}.`
+    }
+
+    if (!values.degreeProgramCode) {
+      nextErrors.degreeProgramCode = 'Choose a degree programme.'
     }
 
     return nextErrors
@@ -85,7 +85,8 @@ function StudentForm({
         number: values.number.trim(),
         name: values.name.trim(),
         email: values.email.trim(),
-        currentYear: Number(values.currentYear),
+        registrationYear: Number(values.registrationYear),
+        degreeProgramCode: values.degreeProgramCode,
       })
       setSubmitError(null)
     } catch (error) {
@@ -97,9 +98,12 @@ function StudentForm({
 
   const handleInput = (
     field: keyof StudentFormValues,
-  ) => (event: ChangeEvent<HTMLInputElement>) => {
+  ) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     updateValue(field, event.target.value)
   }
+
+  const validYear = Number.isInteger(values.registrationYear) && values.registrationYear >= 1900
+    && values.registrationYear <= firstYear
 
   return (
     <form className="student-form" onSubmit={handleSubmit} noValidate>
@@ -142,18 +146,40 @@ function StudentForm({
         </label>
 
         <label>
-          <span>Current year</span>
+          <span>Registration year</span>
           <input
-            aria-label="Current year"
+            aria-label="Registration year"
             type="number"
-            min={1}
-            max={5}
-            name="currentYear"
-            value={values.currentYear}
-            onChange={handleInput('currentYear')}
-            aria-invalid={Boolean(errors.currentYear)}
+            min={1900}
+            max={firstYear}
+            name="registrationYear"
+            value={values.registrationYear}
+            onChange={handleInput('registrationYear')}
+            aria-invalid={Boolean(errors.registrationYear)}
           />
-          {errors.currentYear ? <small>{errors.currentYear}</small> : null}
+          {errors.registrationYear ? (
+            <small>{errors.registrationYear}</small>
+          ) : validYear ? (
+            <small className="field-hint">Year of study: {yearOfStudy(values.registrationYear)}</small>
+          ) : null}
+        </label>
+
+        <label>
+          <span>Degree programme</span>
+          <select
+            aria-label="Degree programme"
+            name="degreeProgramCode"
+            value={values.degreeProgramCode}
+            onChange={handleInput('degreeProgramCode')}
+            aria-invalid={Boolean(errors.degreeProgramCode)}
+          >
+            {DEGREE_PROGRAMMES.map((programme) => (
+              <option key={programme.code} value={programme.code}>
+                {programme.code} — {programme.name}
+              </option>
+            ))}
+          </select>
+          {errors.degreeProgramCode ? <small>{errors.degreeProgramCode}</small> : null}
         </label>
       </div>
 

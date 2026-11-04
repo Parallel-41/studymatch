@@ -1,19 +1,26 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { api } from '../../api/client'
-import type { StudentAttempt } from '../../api/types'
+import type { AssessmentSeason, CourseUnit, StudentAttempt } from '../../api/types'
+import { currentAcademicYear } from './academicYear'
 import { groupAttempts } from './studentHistoryUtils'
+import { SEASONS } from './studentOptions'
 
 type StudentHistoryProps = {
   studentId: number
 }
 
+const academicYearPattern = /^\d{4}\/(\d{2}|\d{4})$/
+
 function StudentHistory({ studentId }: StudentHistoryProps) {
   const [attempts, setAttempts] = useState<StudentAttempt[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [course, setCourse] = useState('')
-  const [academicYear, setAcademicYear] = useState('2026/2027')
-  const [semester, setSemester] = useState(1)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [units, setUnits] = useState<CourseUnit[]>([])
+  const [unitCode, setUnitCode] = useState('')
+  const [academicYear, setAcademicYear] = useState(currentAcademicYear())
+  const [season, setSeason] = useState<AssessmentSeason>('NORMAL')
   const [grade, setGrade] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -26,7 +33,6 @@ function StudentHistory({ studentId }: StudentHistoryProps) {
         const result = await api.studentAttempts(studentId)
         if (isMounted) {
           setAttempts(result)
-          setError(null)
         }
       } catch (loadError) {
         if (isMounted) {
@@ -44,29 +50,54 @@ function StudentHistory({ studentId }: StudentHistoryProps) {
     return () => {
       isMounted = false
     }
-  }, [studentId])
+  }, [studentId, reloadKey])
+
+  useEffect(() => {
+    let isMounted = true
+
+    api.courseUnits()
+      .then((result) => {
+        if (isMounted) {
+          setUnits(result)
+          setUnitCode((current) => current || result[0]?.code || '')
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError('Unable to load course units.')
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setNotice(null)
     const parsedGrade = Number(grade)
+    const unit = units.find((candidate) => candidate.code === unitCode)
 
-    if (!course.trim() || !academicYear.trim() || !Number.isFinite(parsedGrade) || parsedGrade < 0 || parsedGrade > 20) {
-      setError('Enter a course, academic year, and grade between 0 and 20.')
+    if (!unit || !academicYearPattern.test(academicYear.trim()) || grade.trim() === ''
+      || !Number.isInteger(parsedGrade) || parsedGrade < 0 || parsedGrade > 20) {
+      setError('Choose a course unit, an academic year like 2026/27 and a whole grade from 0 to 20.')
       return
     }
 
     setSaving(true)
     setError(null)
     try {
-      const created = await api.addStudentAttempt(studentId, {
-        course: course.trim(),
+      await api.addStudentAttempt(studentId, {
+        course: unit.code,
         academicYear: academicYear.trim(),
-        semester,
+        semester: unit.semester,
         grade: parsedGrade,
+        season,
       })
-      setAttempts((current) => [...current, created])
-      setCourse('')
       setGrade('')
+      setNotice('Attempt added.')
+      setReloadKey((key) => key + 1)
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Unable to add attempt.')
     } finally {
@@ -82,6 +113,7 @@ function StudentHistory({ studentId }: StudentHistoryProps) {
 
       {loading ? <p role="status">Loading history...</p> : null}
       {error ? <div className="error-box" role="alert">{error}</div> : null}
+      {notice ? <p role="status">{notice}</p> : null}
       {!loading && !error && attempts.length === 0 ? <p>No academic attempts recorded.</p> : null}
 
       {!loading && attempts.length > 0 ? (
@@ -114,36 +146,52 @@ function StudentHistory({ studentId }: StudentHistoryProps) {
         </div>
       ) : null}
 
-      <form className="attempt-form" onSubmit={handleSubmit}>
+      <form className="attempt-form" onSubmit={handleSubmit} noValidate>
         <h4>Add an attempt</h4>
         <label>
-          <span>Course</span>
-          <input value={course} onChange={(event) => setCourse(event.target.value)} required />
+          <span>Course unit</span>
+          <select aria-label="Course unit" value={unitCode} onChange={(event) => setUnitCode(event.target.value)}>
+            {units.map((unit) => (
+              <option key={unit.code} value={unit.code}>
+                {unit.code} — {unit.name} (year {unit.curricularYear}, semester {unit.semester})
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span>Academic year</span>
-          <input value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} required />
+          <input
+            aria-label="Academic year"
+            value={academicYear}
+            placeholder="2026/27"
+            onChange={(event) => setAcademicYear(event.target.value)}
+          />
         </label>
         <label>
-          <span>Semester</span>
-          <select value={semester} onChange={(event) => setSemester(Number(event.target.value))}>
-            <option value={1}>1</option>
-            <option value={2}>2</option>
+          <span>Season</span>
+          <select
+            aria-label="Season"
+            value={season}
+            onChange={(event) => setSeason(event.target.value as AssessmentSeason)}
+          >
+            {SEASONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
         </label>
         <label>
           <span>Grade (0-20)</span>
           <input
+            aria-label="Grade"
             type="number"
             min={0}
             max={20}
-            step={0.1}
+            step={1}
             value={grade}
             onChange={(event) => setGrade(event.target.value)}
-            required
           />
         </label>
-        <button type="submit" disabled={saving}>{saving ? 'Adding...' : 'Add attempt'}</button>
+        <button type="submit" disabled={saving || units.length === 0}>{saving ? 'Adding...' : 'Add attempt'}</button>
       </form>
     </section>
   )

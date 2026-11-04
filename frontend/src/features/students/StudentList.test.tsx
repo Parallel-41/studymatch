@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../../api/client'
 import StudentList from './StudentList'
@@ -73,5 +74,40 @@ describe('StudentList', () => {
 
     expect(await screen.findByRole('heading', { name: 'Programming explanation' })).toBeInTheDocument()
     expect(explanationRequest).toHaveBeenCalledWith(1, 'programming')
+  })
+
+  it('edits a student with the registration year returned by the API', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(api, 'students').mockResolvedValue([
+      {
+        id: 4,
+        number: 'DEMO-A-3',
+        name: 'Estudiante Veterano A',
+        email: 'demo_a@upt.pt',
+        currentYear: 3,
+        registrationYear: 2024,
+        degreeProgram: { code: 'LEI', name: 'Licenciatura em Engenharia Informática' },
+      },
+    ])
+    const update = vi.spyOn(api, 'updateStudent').mockImplementation(async (id, draft) => ({
+      id, ...draft, currentYear: 3, degreeProgram: { code: draft.degreeProgramCode, name: 'LEI' },
+    }))
+
+    render(<StudentList />)
+
+    await user.click(await screen.findByRole('button', { name: 'Edit' }))
+    expect(screen.getByLabelText('Registration year')).toHaveValue(2024)
+    await user.clear(screen.getByLabelText('Full name'))
+    await user.type(screen.getByLabelText('Full name'), 'Demo Student A')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(update).toHaveBeenCalledWith(4, {
+      number: 'DEMO-A-3',
+      name: 'Demo Student A',
+      email: 'demo_a@upt.pt',
+      registrationYear: 2024,
+      degreeProgramCode: 'LEI',
+    })
+    expect(await screen.findByRole('cell', { name: 'Demo Student A' })).toBeInTheDocument()
   })
 })

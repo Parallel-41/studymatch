@@ -10,6 +10,16 @@ export type Student = {
   name: string
   email: string
   currentYear: number
+  registrationYear?: number
+  degreeProgram?: { code: string; name: string }
+}
+
+export type CourseUnit = {
+  code: string
+  name: string
+  curricularYear: number
+  semester: number
+  ects: number
 }
 
 export type StudentAttempt = {
