@@ -72,4 +72,12 @@ describe('GroupsPage', () => {
     expect(await screen.findByText('No generations yet.')).toBeInTheDocument()
     expect(screen.getByText('Generate groups to see the proposed teams.')).toBeInTheDocument()
   })
+
+  it('shows an accessible error when generation history cannot be loaded', async () => {
+    vi.spyOn(api, 'groupGenerations').mockRejectedValue(new Error('History unavailable.'))
+
+    render(<GroupsPage contextId={7} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('History unavailable.')
+  })
 })
