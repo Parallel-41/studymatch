@@ -63,4 +63,13 @@ describe('GroupsPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Closest split used')
     expect(screen.getByText('5 groups · 23 students')).toBeInTheDocument()
   })
+
+  it('shows an empty state when the context has no previous generations', async () => {
+    vi.spyOn(api, 'groupGenerations').mockResolvedValue([])
+
+    render(<GroupsPage contextId={7} />)
+
+    expect(await screen.findByText('No generations yet.')).toBeInTheDocument()
+    expect(screen.getByText('Generate groups to see the proposed teams.')).toBeInTheDocument()
+  })
 })
