@@ -68,3 +68,44 @@ export type StudentProfileData = {
   areas: ProfileArea[]
   competencies: ProfileCompetency[]
 }
+
+export type GroupMemberArea = ProfileArea & { confidence: number }
+
+export type GroupMemberSummary = {
+  studentId: number
+  number: string
+  name: string
+  areas: GroupMemberArea[]
+  explanation: string
+}
+
+export type GroupAreaSummary = {
+  code: string
+  name: string
+  level: number | null
+}
+
+export type GeneratedGroup = {
+  id: number
+  number: number
+  score: number
+  areas: GroupAreaSummary[]
+  explanation: string
+  members: GroupMemberSummary[]
+}
+
+export type GroupGeneration = {
+  id: number
+  generatedAt: string
+  score: number
+  warning?: string
+  groups: GeneratedGroup[]
+}
+
+export type GroupGenerationHistoryItem = {
+  id: number
+  generatedAt: string
+  score: number
+  groupCount: number
+  warning?: string
+}

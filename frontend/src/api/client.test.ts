@@ -48,4 +48,25 @@ describe('api client — students', () => {
 
     await expect(api.createStudent({ ...draft, registrationYear: 1800 })).rejects.toThrow('registrationYear')
   })
+
+  it('uses demo generation history when the generation endpoint is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(502, { message: 'Bad Gateway' })))
+
+    const generations = await api.groupGenerations(7)
+
+    expect(generations).toHaveLength(2)
+    expect(generations[0].groupCount).toBe(5)
+  })
+
+  it('uses a demo generation when POST is not available but preserves API validation errors', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(404, { message: 'Not Found' }))
+      .mockResolvedValueOnce(jsonResponse(422, { message: 'This participant count cannot be grouped.' }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const generation = await api.generateGroups(7)
+    expect(generation.groups).toHaveLength(5)
+    expect(generation.groups.reduce((count, group) => count + group.members.length, 0)).toBe(23)
+    await expect(api.generateGroups(7)).rejects.toThrow('This participant count cannot be grouped.')
+  })
 })

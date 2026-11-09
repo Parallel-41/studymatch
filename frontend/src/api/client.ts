@@ -6,7 +6,10 @@ import type {
   Student,
   StudentAttempt,
   StudentAttemptDraft,
+  GroupGeneration,
+  GroupGenerationHistoryItem,
 } from './types'
+import { createDemoGeneration, demoGroupGenerations, getDemoGenerationHistory } from './examples/group-generations'
 import {
   fromBackendExplanation,
   fromBackendHistory,
@@ -104,6 +107,13 @@ const mockStudentProfile: StudentProfileData = {
   ],
 }
 
+let nextMockGenerationId = 3
+
+function saveMockGeneration(generation: GroupGeneration) {
+  demoGroupGenerations.unshift(generation)
+  return generation
+}
+
 const matchQuery = (student: Student, query: string) => {
   const normalizedQuery = query.trim().toLowerCase()
 
@@ -148,6 +158,17 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
     }
 
     return fallback
+  }
+}
+
+async function getGroupingJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    return await getJson(path, fallback)
+  } catch (error) {
+    if (error instanceof ApiError && [404, 502, 503].includes(error.status ?? 0)) {
+      return fallback
+    }
+    throw error
   }
 }
 
@@ -231,6 +252,41 @@ export const api = {
   studentProfile: async (studentId: number) => {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
     return profile ? fromBackendProfile(profile) : mockStudentProfile
+  },
+  groupGenerations: (contextId: number) =>
+    getGroupingJson<GroupGenerationHistoryItem[]>(
+      `/api/grouping-contexts/${contextId}/generations`,
+      getDemoGenerationHistory(),
+    ),
+  groupGeneration: (contextId: number, generationId: number) =>
+    getGroupingJson<GroupGeneration | null>(
+      `/api/grouping-contexts/${contextId}/generations/${generationId}`,
+      demoGroupGenerations.find((generation) => generation.id === generationId) ?? null,
+    ),
+  generateGroups: async (contextId: number) => {
+    const mockGeneration = () => saveMockGeneration(
+      createDemoGeneration(nextMockGenerationId++, new Date().toISOString()),
+    )
+
+    try {
+      const response = await fetch(`/api/grouping-contexts/${contextId}/generations`, { method: 'POST' })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupGeneration & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if ([404, 502, 503].includes(response.status)) {
+        return mockGeneration()
+      }
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to generate groups.', response.status, body?.code, body?.details)
+      }
+      return body ?? mockGeneration()
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
+      return mockGeneration()
+    }
   },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const { season, ...fields } = attempt
