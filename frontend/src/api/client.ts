@@ -2,11 +2,16 @@ import type {
   CompetencyExplanation,
   CourseUnit,
   HealthResponse,
+  GroupingContext,
+  GroupingContextDraft,
+  GroupingEligibleStudent,
   StudentProfileData,
   Student,
   StudentAttempt,
   StudentAttemptDraft,
 } from './types'
+import groupingContextsExample from './examples/grouping-contexts.json'
+import groupingStudentsExample from './examples/grouping-students.json'
 import {
   fromBackendExplanation,
   fromBackendHistory,
@@ -91,10 +96,10 @@ const mockCompetencyExplanation: CompetencyExplanation = {
 
 const mockStudentProfile: StudentProfileData = {
   areas: [
-    { code: 'technical', name: 'Technical', level: 76 },
-    { code: 'analytical', name: 'Analytical', level: 84 },
-    { code: 'collaboration', name: 'Collaboration', level: 58 },
-    { code: 'communication', name: 'Communication', level: 0 },
+    { code: 'technical', name: 'Technical', level: 76, confidence: 0.7 },
+    { code: 'analytical', name: 'Analytical', level: 84, confidence: 0.8 },
+    { code: 'collaboration', name: 'Collaboration', level: 58, confidence: 0.5 },
+    { code: 'communication', name: 'Communication', level: 0, confidence: 0.2 },
   ],
   competencies: [
     { code: 'problem-solving', name: 'Problem solving', areaCode: 'analytical', level: 84, confidence: 'HIGH' },
@@ -103,6 +108,11 @@ const mockStudentProfile: StudentProfileData = {
     { code: 'presentation', name: 'Presentation', areaCode: 'communication', level: 0, confidence: 'LOW' },
   ],
 }
+
+const mockGroupingContexts = groupingContextsExample as GroupingContext[]
+const mockGroupingStudents = groupingStudentsExample as GroupingEligibleStudent[]
+const mockGroupingProfiles = new Map(mockGroupingStudents.map((student) => [student.id, student.profile]))
+let nextMockGroupingContextId = Math.max(...mockGroupingContexts.map((context) => context.id)) + 1
 
 const matchQuery = (student: Student, query: string) => {
   const normalizedQuery = query.trim().toLowerCase()
@@ -149,6 +159,27 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
 
     return fallback
   }
+}
+
+async function getGroupingJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    return await getJson(path, fallback)
+  } catch (error) {
+    if (error instanceof ApiError && [404, 502, 503].includes(error.status ?? 0)) {
+      return fallback
+    }
+    throw error
+  }
+}
+
+function saveMockGroupingContext(context: GroupingContext) {
+  const index = mockGroupingContexts.findIndex((item) => item.id === context.id)
+  if (index >= 0) {
+    mockGroupingContexts[index] = context
+  } else {
+    mockGroupingContexts.unshift(context)
+  }
+  return context
 }
 
 export const api = {
@@ -230,7 +261,89 @@ export const api = {
   },
   studentProfile: async (studentId: number) => {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
-    return profile ? fromBackendProfile(profile) : mockStudentProfile
+    return profile ? fromBackendProfile(profile) : mockGroupingProfiles.get(studentId) ?? mockStudentProfile
+  },
+  groupingStudents: async () => {
+    try {
+      const students = await api.students()
+      return await Promise.all(students.map(async (student) => {
+        const profile = await api.studentProfile(student.id)
+        const hasEvidence = profile.areas.some((area) => area.level !== null && (area.confidence ?? 0) > 0)
+        return { ...student, profile, coldStart: !hasEvidence }
+      }))
+    } catch (error) {
+      if (error instanceof ApiError && [404, 502, 503].includes(error.status ?? 0)) {
+        return mockGroupingStudents
+      }
+      throw error
+    }
+  },
+  groupingContexts: async () => {
+    const contexts = await getGroupingJson<GroupingContext[]>('/api/grouping-contexts', mockGroupingContexts)
+    contexts.forEach((context) => saveMockGroupingContext(context))
+    return contexts
+  },
+  groupingContext: async (contextId: number) => {
+    const context = await getGroupingJson<GroupingContext | null>(
+      `/api/grouping-contexts/${contextId}`,
+      mockGroupingContexts.find((item) => item.id === contextId) ?? null,
+    )
+    return context ? saveMockGroupingContext(context) : null
+  },
+  createGroupingContext: async (draft: GroupingContextDraft) => {
+    const createMock = () => saveMockGroupingContext({
+      id: nextMockGroupingContextId++,
+      ...draft,
+      createdAt: new Date().toISOString(),
+      studentIds: [],
+    })
+
+    try {
+      const response = await fetch('/api/grouping-contexts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupingContext & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if ([404, 502, 503].includes(response.status)) return createMock()
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to create grouping context.', response.status, body?.code, body?.details)
+      }
+      return body ? saveMockGroupingContext(body) : createMock()
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      return createMock()
+    }
+  },
+  saveGroupingParticipants: async (contextId: number, studentIds: number[]) => {
+    const updateMock = () => {
+      const context = mockGroupingContexts.find((item) => item.id === contextId)
+      if (!context) throw new ApiError('Grouping context not found.', 404)
+      return saveMockGroupingContext({ ...context, studentIds: [...studentIds] })
+    }
+
+    try {
+      const response = await fetch(`/api/grouping-contexts/${contextId}/participants`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds }),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupingContext & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if ([404, 502, 503].includes(response.status)) return updateMock()
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to save participants.', response.status, body?.code, body?.details)
+      }
+      return body ? saveMockGroupingContext(body) : updateMock()
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      return updateMock()
+    }
   },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const { season, ...fields } = attempt
