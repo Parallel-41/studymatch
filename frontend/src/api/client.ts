@@ -26,6 +26,16 @@ export type StudentDraft = {
   degreeProgramCode: string
 }
 
+export type GroupingConstraintType = 'TOGETHER' | 'APART'
+
+export type GroupingConstraint = {
+  id: number
+  type: GroupingConstraintType
+  studentIds: number[]
+}
+
+export type GroupingConstraintDraft = Omit<GroupingConstraint, 'id'>
+
 const academicYearStart = (now = new Date()) => (now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1)
 
 const draftToStudent = (id: number, draft: StudentDraft): Student => ({
@@ -231,6 +241,36 @@ export const api = {
   studentProfile: async (studentId: number) => {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
     return profile ? fromBackendProfile(profile) : mockStudentProfile
+  },
+  groupingConstraints: (contextId: number) =>
+    getJson<GroupingConstraint[]>(`/api/grouping-contexts/${contextId}/constraints`, []),
+  addGroupingConstraint: async (contextId: number, draft: GroupingConstraintDraft) => {
+    const response = await fetch(`/api/grouping-contexts/${contextId}/constraints`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draft),
+    })
+    const body = (await response.json().catch(() => null)) as
+      | (GroupingConstraint & { message?: string; code?: string; details?: unknown })
+      | null
+
+    if (!response.ok) {
+      throw new ApiError(body?.message ?? 'Unable to add constraint.', response.status, body?.code, body?.details)
+    }
+
+    return body as GroupingConstraint
+  },
+  removeGroupingConstraint: async (contextId: number, constraintId: number) => {
+    const response = await fetch(`/api/grouping-contexts/${contextId}/constraints/${constraintId}`, {
+      method: 'DELETE',
+    })
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string; code?: string; details?: unknown }
+      | null
+
+    if (!response.ok) {
+      throw new ApiError(body?.message ?? 'Unable to remove constraint.', response.status, body?.code, body?.details)
+    }
   },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const { season, ...fields } = attempt
