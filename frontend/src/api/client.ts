@@ -305,4 +305,6 @@ export const api = {
   },
   groupingContext: (contextId: number) =>
     getRequiredJson<GroupingContext>(`/api/grouping-contexts/${contextId}`),
+  groupingContexts: () =>
+    getRequiredJson<GroupingContext[]>('/api/grouping-contexts'),
 }

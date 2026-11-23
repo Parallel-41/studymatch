@@ -1,10 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { api } from './api/client'
 import HealthBadge from './features/health/HealthBadge'
 import GroupsPage from './features/grouping/GroupsPage'
 import StudentList from './features/students/StudentList'
 
 function App() {
   const [activeView, setActiveView] = useState<'students' | 'groups'>('students')
+  const [contextId, setContextId] = useState<number | null>(null)
+
+  useEffect(() => {
+    let active = true
+    api.groupingContexts()
+      .then((contexts) => {
+        if (active) setContextId(contexts[0]?.id ?? null)
+      })
+      .catch(() => {
+        if (active) setContextId(null)
+      })
+    return () => { active = false }
+  }, [])
 
   return (
     <div className="page-shell">
@@ -37,7 +51,11 @@ function App() {
       </nav>
 
       <main className="main-panel" id="app-content" role="tabpanel" aria-labelledby={`${activeView}-tab`}>
-        {activeView === 'groups' ? <GroupsPage contextId={1} /> : <StudentList />}
+        {activeView === 'groups'
+          ? contextId === null
+            ? <p role="status">Loading grouping contexts...</p>
+            : <GroupsPage contextId={contextId} />
+          : <StudentList />}
       </main>
     </div>
   )
