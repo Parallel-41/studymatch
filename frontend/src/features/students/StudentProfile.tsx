@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
 import type { CompetencyExplanation, ProfileArea, Student, StudentProfileData } from '../../api/types'
+import { SelfAssessmentForm } from './SelfAssessmentForm'
 
 type StudentProfileProps = {
   student: Student
@@ -32,7 +33,7 @@ function ProfileRadarChart({ areas }: { areas: ProfileArea[] }) {
 
   const points = availableAreas.map((area, index) => {
     const normalizedLevel = Math.max(0, Math.min(100, area.level ?? 0))
-    const radius = chartRadius * normalizedLevel / 100
+    const radius = (chartRadius * normalizedLevel) / 100
     return {
       ...area,
       point: chartPoint(index, availableAreas.length, radius),
@@ -47,7 +48,7 @@ function ProfileRadarChart({ areas }: { areas: ProfileArea[] }) {
         {[25, 50, 75, 100].map((step) => (
           <polygon
             key={step}
-            points={availableAreas.map((_, index) => chartPoint(index, availableAreas.length, chartRadius * step / 100)).join(' ')}
+            points={availableAreas.map((_, index) => chartPoint(index, availableAreas.length, (chartRadius * step) / 100)).join(' ')}
             className="radar-grid"
           />
         ))}
@@ -166,48 +167,49 @@ function StudentProfile({ student }: StudentProfileProps) {
       {profile ? (
         <>
           <ProfileRadarChart areas={profile.areas} />
+          <SelfAssessmentForm studentId={student.id} onSaved={setProfile} />
           <section className="profile-competencies" aria-label="Competency levels">
             <h3>Competencies</h3>
             <div className="table-wrap">
               <table aria-label="Competency levels and confidence">
                 <thead>
-                  <tr>
-                    <th>Competency</th>
-                    <th>Area</th>
-                    <th>Level</th>
-                    <th>Confidence</th>
-                    <th>Explanation</th>
-                  </tr>
+                <tr>
+                  <th>Competency</th>
+                  <th>Area</th>
+                  <th>Level</th>
+                  <th>Confidence</th>
+                  <th>Explanation</th>
+                </tr>
                 </thead>
                 <tbody>
-                  {profile.competencies.map((competency) => {
-                    const area = profile.areas.find(({ code }) => code === competency.areaCode)
-                    const confidenceLabel = competency.confidence
-                      ? `${competency.confidence.charAt(0)}${competency.confidence.slice(1).toLowerCase()} confidence`
-                      : 'No data'
+                {profile.competencies.map((competency) => {
+                  const area = profile.areas.find(({ code }) => code === competency.areaCode)
+                  const confidenceLabel = competency.confidence
+                    ? `${competency.confidence.charAt(0)}${competency.confidence.slice(1).toLowerCase()} confidence`
+                    : 'No data'
 
-                    return (
-                      <tr key={competency.code}>
-                        <td>{competency.name}</td>
-                        <td>{area?.name ?? 'No data'}</td>
-                        <td>{competency.level === null ? <span className="no-data-value">No data</span> : competency.level}</td>
-                        <td>
+                  return (
+                    <tr key={competency.code}>
+                      <td>{competency.name}</td>
+                      <td>{area?.name ?? 'No data'}</td>
+                      <td>{competency.level === null ? <span className="no-data-value">No data</span> : competency.level}</td>
+                      <td>
                           <span className={competency.confidence === 'LOW' ? 'low-confidence' : 'confidence-label'}>
                             {confidenceLabel}
                           </span>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            aria-expanded={selectedCode === competency.code}
-                            onClick={() => toggleCompetency(competency.code)}
-                          >
-                            {selectedCode === competency.code ? 'Hide explanation' : 'Explain'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          aria-expanded={selectedCode === competency.code}
+                          onClick={() => toggleCompetency(competency.code)}
+                        >
+                          {selectedCode === competency.code ? 'Hide explanation' : 'Explain'}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
                 </tbody>
               </table>
             </div>
@@ -233,29 +235,29 @@ function StudentProfile({ student }: StudentProfileProps) {
               <div className="table-wrap">
                 <table aria-label="Course contribution breakdown">
                   <thead>
-                    <tr>
-                      <th>Course unit</th>
-                      <th>Grade</th>
-                      <th>Weight</th>
-                      <th>Recency</th>
-                      <th>Share of level</th>
-                    </tr>
+                  <tr>
+                    <th>Course unit</th>
+                    <th>Grade</th>
+                    <th>Weight</th>
+                    <th>Recency</th>
+                    <th>Share of level</th>
+                  </tr>
                   </thead>
                   <tbody>
-                    {explanation.contributions.map((contribution) => (
-                      <tr key={contribution.courseUnit}>
-                        <td>{contribution.courseUnit}</td>
-                        <td>{contribution.grade}</td>
-                        <td>{contribution.weight}</td>
-                        <td>{contribution.recencyFactor}</td>
-                        <td>
-                          <span>{contribution.percentageOfLevel}%</span>
-                          <div className="contribution-track" aria-hidden="true">
-                            <span style={{ width: `${Math.max(0, Math.min(100, contribution.percentageOfLevel))}%` }} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                  {explanation.contributions.map((contribution) => (
+                    <tr key={contribution.courseUnit}>
+                      <td>{contribution.courseUnit}</td>
+                      <td>{contribution.grade}</td>
+                      <td>{contribution.weight}</td>
+                      <td>{contribution.recencyFactor}</td>
+                      <td>
+                        <span>{contribution.percentageOfLevel}%</span>
+                        <div className="contribution-track" aria-hidden="true">
+                          <span style={{ width: `${Math.max(0, Math.min(100, contribution.percentageOfLevel))}%` }} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                   </tbody>
                 </table>
               </div>
