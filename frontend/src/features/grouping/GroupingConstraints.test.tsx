@@ -66,4 +66,13 @@ describe('GroupingConstraints', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Choose at least two participants.')
     expect(add).not.toHaveBeenCalled()
   })
+
+  it('shows the load error when constraints cannot be fetched', async () => {
+    vi.spyOn(api, 'groupingConstraints').mockRejectedValue(new Error('Constraint service unavailable'))
+
+    render(<GroupingConstraints contextId={7} participants={participants} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Constraint service unavailable')
+    expect(screen.queryByText('No participant rules yet.')).not.toBeInTheDocument()
+  })
 })

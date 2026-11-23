@@ -54,6 +54,10 @@ function GroupingConstraints({ contextId, participants }: GroupingConstraintsPro
       setFormError('Choose at least two participants.')
       return
     }
+    if (type === 'TOGETHER' && studentIds.length > 5) {
+      setFormError('A TOGETHER rule cannot include more than 5 participants.')
+      return
+    }
 
     setSaving(true)
     setFormError(null)

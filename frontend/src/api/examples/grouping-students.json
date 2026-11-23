@@ -1,0 +1,116 @@
+[
+  {
+    "id": 1,
+    "number": "a20240001",
+    "name": "Ana Ribeiro",
+    "email": "ana.ribeiro@example.pt",
+    "currentYear": 3,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 78, "confidence": 0.72 },
+        { "code": "DB", "name": "Databases", "level": 62, "confidence": 0.5 },
+        { "code": "WEB", "name": "Web", "level": 54, "confidence": 0.34 },
+        { "code": "QUAL", "name": "Quality", "level": 43, "confidence": 0.22 },
+        { "code": "MATH", "name": "Mathematics", "level": 67, "confidence": 0.55 },
+        { "code": "SOFT", "name": "Soft skills", "level": 71, "confidence": 0.68 }
+      ],
+      "competencies": []
+    },
+    "coldStart": false
+  },
+  {
+    "id": 2,
+    "number": "a20240002",
+    "name": "Bruno Silva",
+    "email": "bruno.silva@example.pt",
+    "currentYear": 2,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 61, "confidence": 0.42 },
+        { "code": "DB", "name": "Databases", "level": 81, "confidence": 0.76 },
+        { "code": "WEB", "name": "Web", "level": 70, "confidence": 0.6 },
+        { "code": "QUAL", "name": "Quality", "level": 58, "confidence": 0.4 },
+        { "code": "MATH", "name": "Mathematics", "level": 47, "confidence": 0.3 },
+        { "code": "SOFT", "name": "Soft skills", "level": 52, "confidence": 0.36 }
+      ],
+      "competencies": []
+    },
+    "coldStart": false
+  },
+  {
+    "id": 3,
+    "number": "a20240003",
+    "name": "Carla Costa",
+    "email": "carla.costa@example.pt",
+    "currentYear": 1,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 58, "confidence": 0 },
+        { "code": "DB", "name": "Databases", "level": 66, "confidence": 0 },
+        { "code": "WEB", "name": "Web", "level": 49, "confidence": 0 },
+        { "code": "QUAL", "name": "Quality", "level": 57, "confidence": 0 },
+        { "code": "MATH", "name": "Mathematics", "level": 73, "confidence": 0 },
+        { "code": "SOFT", "name": "Soft skills", "level": 79, "confidence": 0 }
+      ],
+      "competencies": []
+    },
+    "coldStart": true
+  },
+  {
+    "id": 4,
+    "number": "a20240004",
+    "name": "Diogo Almeida",
+    "email": "diogo.almeida@example.pt",
+    "currentYear": 4,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 65, "confidence": 0.48 },
+        { "code": "DB", "name": "Databases", "level": 74, "confidence": 0.66 },
+        { "code": "WEB", "name": "Web", "level": 82, "confidence": 0.78 },
+        { "code": "QUAL", "name": "Quality", "level": 69, "confidence": 0.6 },
+        { "code": "MATH", "name": "Mathematics", "level": 51, "confidence": 0.36 },
+        { "code": "SOFT", "name": "Soft skills", "level": 63, "confidence": 0.48 }
+      ],
+      "competencies": []
+    },
+    "coldStart": false
+  },
+  {
+    "id": 5,
+    "number": "a20240005",
+    "name": "Eva Martins",
+    "email": "eva.martins@example.pt",
+    "currentYear": 3,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 53, "confidence": 0.35 },
+        { "code": "DB", "name": "Databases", "level": 77, "confidence": 0.69 },
+        { "code": "WEB", "name": "Web", "level": 68, "confidence": 0.55 },
+        { "code": "QUAL", "name": "Quality", "level": 84, "confidence": 0.8 },
+        { "code": "MATH", "name": "Mathematics", "level": 61, "confidence": 0.44 },
+        { "code": "SOFT", "name": "Soft skills", "level": 73, "confidence": 0.65 }
+      ],
+      "competencies": []
+    },
+    "coldStart": false
+  },
+  {
+    "id": 6,
+    "number": "a20240006",
+    "name": "Filipe Rocha",
+    "email": "filipe.rocha@example.pt",
+    "currentYear": 2,
+    "profile": {
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": null, "confidence": 0 },
+        { "code": "DB", "name": "Databases", "level": null, "confidence": 0 },
+        { "code": "WEB", "name": "Web", "level": null, "confidence": 0 },
+        { "code": "QUAL", "name": "Quality", "level": null, "confidence": 0 },
+        { "code": "MATH", "name": "Mathematics", "level": null, "confidence": 0 },
+        { "code": "SOFT", "name": "Soft skills", "level": null, "confidence": 0 }
+      ],
+      "competencies": []
+    },
+    "coldStart": true
+  }
+]

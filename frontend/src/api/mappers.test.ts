@@ -53,6 +53,7 @@ describe('backend mappers', () => {
       ],
     })
 
+    expect(profile.areas[0]).toMatchObject({ code: 'PROG', confidence: 0.61 })
     expect(profile.competencies[0]).toMatchObject({ areaCode: 'PROG', confidence: 'MEDIUM' })
     expect(profile.competencies[1].confidence).toBeNull()
   })
