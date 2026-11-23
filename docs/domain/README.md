@@ -64,7 +64,11 @@ classDiagram
         -createdAt : Instant
     }
     class GroupingConstraint {
-        -type : ConstraintType
+        <<abstract>>
+    }
+    class TogetherConstraint {
+    }
+    class ApartConstraint {
     }
     class GroupGeneration {
         -generatedAt : Instant
@@ -75,6 +79,9 @@ classDiagram
     class Group {
         -groupNumber : int
         -score : double [0-100]
+        -explanation : String
+    }
+    class GroupMembership {
         -explanation : String
     }
 
@@ -96,7 +103,10 @@ classDiagram
 
     GroupingContext "0..*" -- "0..*" Student : participants
     GroupingContext "1" -- "0..*" GroupingConstraint
+    GroupingConstraint <|-- TogetherConstraint
+    GroupingConstraint <|-- ApartConstraint
     GroupingConstraint "0..*" -- "2..*" Student
     GroupingContext "1" -- "0..*" GroupGeneration
     GroupGeneration "1" -- "1..*" Group
-    Group "0..*" -- "3..5" Student : members
+    Group "1" -- "3..5" GroupMembership
+    GroupMembership "0..*" -- "1" Student
