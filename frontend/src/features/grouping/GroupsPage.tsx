@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
-import type { GeneratedGroup, GroupGeneration, GroupGenerationHistoryItem } from '../../api/types'
+import type { GeneratedGroup, GroupGeneration, GroupGenerationHistoryItem, GroupingContext } from '../../api/types'
 
 type GroupsPageProps = {
   contextId: number
@@ -48,7 +48,7 @@ function GroupCard({ group }: { group: GeneratedGroup }) {
             </div>
             <div className="member-area-list" aria-label={`${member.name} profile areas`}>
               {member.areas.map((area) => (
-                <span key={area.code} title={`${area.name}: ${area.level} (${Math.round(area.confidence * 100)}% confidence)`}>
+                <span key={area.code} title={`${area.name}: ${area.level ?? 'No data'} (${Math.round(area.confidence * 100)}% confidence)`}>
                   {area.code}
                 </span>
               ))}
@@ -71,6 +71,22 @@ function GroupsPage({ contextId }: GroupsPageProps) {
   const [detailError, setDetailError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [openingGenerationId, setOpeningGenerationId] = useState<number | null>(null)
+  const [context, setContext] = useState<GroupingContext | null>(null)
+
+  useEffect(() => {
+    let active = true
+    api.groupingContext(contextId)
+      .then((item) => {
+        if (active) setContext(item)
+      })
+      .catch((error: unknown) => {
+        if (active) setLoadError({
+          contextId,
+          message: error instanceof Error ? error.message : 'Unable to load this context.',
+        })
+      })
+    return () => { active = false }
+  }, [contextId])
 
   useEffect(() => {
     let active = true
@@ -144,9 +160,12 @@ function GroupsPage({ contextId }: GroupsPageProps) {
     <section className="groups-page" aria-labelledby="groups-title">
       <header className="groups-page-heading">
         <div>
-          <p className="section-kicker">Grouping context · 2026/27</p>
-          <h2 id="groups-title">Software project teams</h2>
-          <p className="groups-context-meta">LEI · Semester project <span>23 participants</span></p>
+          <p className="section-kicker">Grouping context</p>
+          <h2 id="groups-title">{context?.name ?? 'Grouping context'}</h2>
+          <p className="groups-context-meta">
+            {context?.description || 'No description provided.'}
+            {context ? <span>{context.studentIds.length} participants</span> : null}
+          </p>
         </div>
         <button type="button" className="generate-groups-button" disabled={generating || loading} onClick={() => void handleGenerate()}>
           {generating ? 'Generating...' : 'Generate groups'}

@@ -109,3 +109,11 @@ export type GroupGenerationHistoryItem = {
   groupCount: number
   warning?: string
 }
+
+export type GroupingContext = {
+  id: number
+  name: string
+  description: string
+  createdAt: string
+  studentIds: number[]
+}

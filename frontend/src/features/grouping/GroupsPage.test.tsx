@@ -1,11 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../../api/client'
 import { createDemoGeneration } from '../../api/examples/group-generations'
 import GroupsPage from './GroupsPage'
 
 describe('GroupsPage', () => {
+  beforeEach(() => {
+    vi.spyOn(api, 'groupingContext').mockResolvedValue({
+      id: 7,
+      name: 'Software project teams',
+      description: 'LEI · Semester project',
+      createdAt: '2026-08-01T00:00:00Z',
+      studentIds: Array.from({ length: 23 }, (_, index) => index + 1),
+    })
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
   })

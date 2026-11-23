@@ -6,6 +6,7 @@ import type {
   Student,
   StudentAttempt,
   StudentAttemptDraft,
+  GroupingContext,
   GroupGeneration,
   GroupGenerationHistoryItem,
 } from './types'
@@ -104,6 +105,40 @@ const mockStudentProfile: StudentProfileData = {
     { code: 'teamwork', name: 'Teamwork', areaCode: 'collaboration', level: 58, confidence: 'LOW' },
     { code: 'presentation', name: 'Presentation', areaCode: 'communication', level: 0, confidence: 'LOW' },
   ],
+}
+
+const matchQuery = (student: Student, query: string) => {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (!normalizedQuery) return true
+  return [student.number, student.name, student.email]
+    .join(' ')
+    .toLowerCase()
+    .includes(normalizedQuery)
+}
+
+const buildStudentUrl = (query?: string) => query
+  ? `/api/students?q=${encodeURIComponent(query)}`
+  : '/api/students'
+
+async function getJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const response = await fetch(path)
+    const payload = (await response.json().catch(() => null)) as
+      | { code?: string; message?: string; details?: unknown }
+      | null
+
+    if (!response.ok) {
+      const responseMessage = typeof payload?.message === 'string'
+        ? payload.message
+        : `${response.status}: ${response.statusText}`
+      throw new ApiError(`${responseMessage} (${response.status})`, response.status, payload?.code, payload?.details)
+    }
+
+    return ((payload as T) ?? fallback) as T
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    return fallback
+  }
 }
 
 async function getRequiredJson<T>(path: string): Promise<T> {
@@ -260,7 +295,6 @@ export const api = {
       if (!response.ok) {
         throw new ApiError(body?.message ?? 'Unable to add attempt.', response.status, body?.code, body?.details)
       }
-
       return payload
     } catch (error) {
       if (error instanceof ApiError) throw error
@@ -269,4 +303,6 @@ export const api = {
       return payload
     }
   },
+  groupingContext: (contextId: number) =>
+    getRequiredJson<GroupingContext>(`/api/grouping-contexts/${contextId}`),
 }
