@@ -117,13 +117,9 @@ describe('api client — grouping contexts', () => {
     expect(students[0].profile.areas[0].level).toBe(60)
   })
 
-  it('uses the eligible-student example when the students endpoint is unavailable', async () => {
+  it('throws the API error when eligible students cannot be loaded', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(502, { message: 'Bad Gateway' })))
 
-    const students = await api.groupingStudents()
-
-    expect(students).toHaveLength(6)
-    expect(students.some((student) => student.coldStart)).toBe(true)
-    expect(students.some((student) => !student.coldStart)).toBe(true)
+    await expect(api.groupingStudents()).rejects.toThrow('Bad Gateway')
   })
 })
