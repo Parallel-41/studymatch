@@ -15,6 +15,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import pt.upt.studymatch.profile.application.CompetencyNotFoundException;
 import pt.upt.studymatch.student.application.DuplicateStudentException;
 import pt.upt.studymatch.student.application.StudentNotFoundException;
 
@@ -79,9 +80,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(StudentNotFoundException.class)
-    public ResponseEntity<ApiError> handleStudentNotFound(
-        StudentNotFoundException exception,
+    @ExceptionHandler({StudentNotFoundException.class, CompetencyNotFoundException.class})
+    public ResponseEntity<ApiError> handleNotFound(
+        RuntimeException exception,
         WebRequest request
     ) {
         return response(

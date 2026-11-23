@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pt.upt.studymatch.student.application.StudentService;
@@ -30,8 +31,15 @@ public class StudentController {
     }
 
     @GetMapping
-    public List<StudentResponse> getAllStudents() {
-        return studentService.findAll().stream()
+    public List<StudentResponse> getAllStudents(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) Integer year
+    ) {
+        List<Student> students = (q != null && !q.isBlank() || year != null)
+            ? studentService.search(q, year)
+            : studentService.findAll();
+
+        return students.stream()
             .map(student -> StudentResponse.from(student, clock))
             .toList();
     }

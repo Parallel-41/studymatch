@@ -1,10 +1,11 @@
 {
   "areas": [
-    { "code": "DB", "name": "Databases", "level": 67.0, "confidence": 0.4 },
-    { "code": "QUAL", "name": "Software Quality", "level": null, "confidence": 0 }
+    { "code": "PROG", "name": "Programming", "level": 55.0, "confidence": 0.31 },
+    { "code": "DB", "name": "Databases", "level": null, "confidence": 0 }
   ],
   "competencies": [
-    { "code": "SQL", "name": "SQL", "area": "DB", "level": 67.0, "confidence": 0.4, "evidenceLevel": 77.6, "selfAssessedLevel": 60.0 },
-    { "code": "TEST", "name": "Unit testing", "area": "QUAL", "level": null, "confidence": 0, "evidenceLevel": null, "selfAssessedLevel": null }
+    { "code": "PROG_OO", "name": "Object-Oriented Programming", "area": "PROG", "level": 59.9, "confidence": 0.61, "evidenceLevel": 66.1, "selfAssessedLevel": 50.0 },
+    { "code": "PROG_ALG", "name": "Algorithms & Data Structures", "area": "PROG", "level": 50.0, "confidence": 0, "evidenceLevel": null, "selfAssessedLevel": 50.0 },
+    { "code": "DB_SQL", "name": "Relational Databases & SQL", "area": "DB", "level": null, "confidence": 0, "evidenceLevel": null, "selfAssessedLevel": null }
   ]
 }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
 import type { Student } from '../../api/types'
+import { academicYearStart } from './academicYear'
 import StudentForm, { type StudentFormValues } from './StudentForm'
+import { DEGREE_PROGRAMMES } from './studentOptions'
 import StudentHistory from './StudentHistory'
 import StudentProfile from './StudentProfile'
 
@@ -43,11 +45,8 @@ function StudentList() {
   }, [search])
 
   const handleSubmit = async (values: StudentFormValues) => {
-    if (editingStudent) {
-      const updated = await api.updateStudent({
-        ...editingStudent,
-        ...values,
-      })
+    if (editingStudent?.id) {
+      const updated = await api.updateStudent(editingStudent.id, values)
 
       setStudents((current) =>
         current.map((student) => (student.id === updated.id ? updated : student)),
@@ -78,7 +77,7 @@ function StudentList() {
             id="student-search"
             type="search"
             value={search}
-            placeholder="Search by name, number, or email"
+            placeholder="Search by name or number"
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
@@ -113,7 +112,9 @@ function StudentList() {
                     number: editingStudent.number,
                     name: editingStudent.name,
                     email: editingStudent.email,
-                    currentYear: editingStudent.currentYear,
+                    registrationYear:
+                      editingStudent.registrationYear ?? academicYearStart() - editingStudent.currentYear + 1,
+                    degreeProgramCode: editingStudent.degreeProgram?.code ?? DEGREE_PROGRAMMES[0].code,
                   }
                 : undefined
             }

@@ -1,17 +1,53 @@
 [
   {
+    "code": "PROG",
+    "name": "Programming",
+    "competencies": [
+      { "code": "PROG_OO", "name": "Object-Oriented Programming" },
+      { "code": "PROG_ALG", "name": "Algorithms & Data Structures" },
+      { "code": "PROG_ARCH", "name": "Software Architecture" }
+    ]
+  },
+  {
     "code": "DB",
     "name": "Databases",
     "competencies": [
-      { "code": "SQL", "name": "SQL" },
-      { "code": "MODEL", "name": "Data modelling" }
+      { "code": "DB_SQL", "name": "Relational Databases & SQL" },
+      { "code": "DB_MODEL", "name": "Data Modelling" }
+    ]
+  },
+  {
+    "code": "WEB",
+    "name": "Web Development",
+    "competencies": [
+      { "code": "WEB_FE", "name": "Frontend Development" },
+      { "code": "WEB_BE", "name": "Backend & REST APIs" }
     ]
   },
   {
     "code": "QUAL",
     "name": "Software Quality",
     "competencies": [
-      { "code": "TEST", "name": "Unit testing" }
+      { "code": "QUAL_TEST", "name": "Automated Testing" },
+      { "code": "QUAL_CI", "name": "CI/CD & Version Control" },
+      { "code": "QUAL_REQ", "name": "Requirements & Use Cases" }
+    ]
+  },
+  {
+    "code": "MATH",
+    "name": "Mathematics & Logic",
+    "competencies": [
+      { "code": "MATH_DISC", "name": "Discrete Mathematics" },
+      { "code": "MATH_STAT", "name": "Statistics & Probability" }
+    ]
+  },
+  {
+    "code": "SOFT",
+    "name": "Soft Skills & Teamwork",
+    "competencies": [
+      { "code": "SOFT_COMM", "name": "Technical Communication" },
+      { "code": "SOFT_TEAM", "name": "Team Collaboration" },
+      { "code": "SOFT_LEAD", "name": "Project Organization" }
     ]
   }
 ]
