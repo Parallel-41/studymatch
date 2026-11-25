@@ -6,6 +6,9 @@ import type {
   Student,
   StudentAttempt,
   StudentAttemptDraft,
+  GroupingContext,
+  GroupGeneration,
+  GroupGenerationHistoryItem,
 } from './types'
 import {
   fromBackendExplanation,
@@ -106,24 +109,16 @@ const mockStudentProfile: StudentProfileData = {
 
 const matchQuery = (student: Student, query: string) => {
   const normalizedQuery = query.trim().toLowerCase()
-
-  if (!normalizedQuery) {
-    return true
-  }
-
+  if (!normalizedQuery) return true
   return [student.number, student.name, student.email]
     .join(' ')
     .toLowerCase()
     .includes(normalizedQuery)
 }
 
-const buildStudentUrl = (query?: string) => {
-  if (!query) {
-    return '/api/students'
-  }
-
-  return `/api/students?q=${encodeURIComponent(query)}`
-}
+const buildStudentUrl = (query?: string) => query
+  ? `/api/students?q=${encodeURIComponent(query)}`
+  : '/api/students'
 
 async function getJson<T>(path: string, fallback: T): Promise<T> {
   try {
@@ -133,21 +128,41 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
       | null
 
     if (!response.ok) {
-      const responseMessage =
-        typeof payload?.message === 'string'
-          ? payload.message
-          : `${response.status}: ${response.statusText}`
-
+      const responseMessage = typeof payload?.message === 'string'
+        ? payload.message
+        : `${response.status}: ${response.statusText}`
       throw new ApiError(`${responseMessage} (${response.status})`, response.status, payload?.code, payload?.details)
     }
 
     return ((payload as T) ?? fallback) as T
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
+    if (error instanceof ApiError) throw error
+    return fallback
+  }
+}
+
+async function getRequiredJson<T>(path: string): Promise<T> {
+  try {
+    const response = await fetch(path)
+    const payload = (await response.json().catch(() => null)) as
+      | (T & { code?: string; message?: string; details?: unknown })
+      | null
+
+    if (!response.ok) {
+      const message = typeof payload?.message === 'string'
+        ? payload.message
+        : `${response.status}: ${response.statusText}`
+      throw new ApiError(message, response.status, payload?.code, payload?.details)
     }
 
-    return fallback
+    if (payload == null) {
+      throw new ApiError('The API returned no data.', response.status)
+    }
+
+    return payload
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to reach the API.')
   }
 }
 
@@ -232,6 +247,33 @@ export const api = {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
     return profile ? fromBackendProfile(profile) : mockStudentProfile
   },
+  groupGenerations: (contextId: number) =>
+    getRequiredJson<GroupGenerationHistoryItem[]>(`/api/grouping-contexts/${contextId}/generations`),
+  groupGeneration: (contextId: number, generationId: number) =>
+    getRequiredJson<GroupGeneration>(`/api/grouping-contexts/${contextId}/generations/${generationId}`),
+  generateGroups: async (contextId: number) => {
+    try {
+      const response = await fetch(`/api/grouping-contexts/${contextId}/generations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupGeneration & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to generate groups.', response.status, body?.code, body?.details)
+      }
+      if (body == null) {
+        throw new ApiError('The API returned no generation.', response.status)
+      }
+      return body
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      throw new ApiError(error instanceof Error ? error.message : 'Unable to generate groups.')
+    }
+  },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const { season, ...fields } = attempt
     const payload: StudentAttempt = {
@@ -253,16 +295,16 @@ export const api = {
       if (!response.ok) {
         throw new ApiError(body?.message ?? 'Unable to add attempt.', response.status, body?.code, body?.details)
       }
-
       return payload
     } catch (error) {
-      if (error instanceof ApiError) {
-        throw error
-      }
-
+      if (error instanceof ApiError) throw error
       mockAttempts[studentId] ??= []
       mockAttempts[studentId].push(payload)
       return payload
     }
   },
+  groupingContext: (contextId: number) =>
+    getRequiredJson<GroupingContext>(`/api/grouping-contexts/${contextId}`),
+  groupingContexts: () =>
+    getRequiredJson<GroupingContext[]>('/api/grouping-contexts'),
 }
