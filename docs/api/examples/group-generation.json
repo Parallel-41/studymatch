@@ -1,0 +1,166 @@
+{
+  "id": 1,
+  "generatedAt": "2026-11-23T10:30:00Z",
+  "seed": 42,
+  "score": 76.4,
+  "groups": [
+    {
+      "id": 1,
+      "number": 1,
+      "score": 78.2,
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 90 },
+        { "code": "DB", "name": "Databases", "level": 68.4 },
+        { "code": "WEB", "name": "Web Development", "level": 88 },
+        { "code": "QUAL", "name": "Software Quality", "level": 70.3 },
+        { "code": "MATH", "name": "Mathematics & Logic", "level": 84 },
+        { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 77.9 }
+      ],
+      "explanation": "Covers 6 of 6 areas with a member at 60 or more; weakest area: Databases (68.4).",
+      "members": [
+        {
+          "studentId": 6,
+          "number": "ST-006",
+          "name": "Filipe Sousa",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 90, "confidence": 1 },
+            { "code": "DB", "name": "Databases", "level": 66, "confidence": 0.8 },
+            { "code": "WEB", "name": "Web Development", "level": 70, "confidence": 0.8 },
+            { "code": "QUAL", "name": "Software Quality", "level": 60, "confidence": 0.7 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 84, "confidence": 1 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 50, "confidence": 0.5 }
+          ],
+          "explanation": "Strongest of the group in Programming, Mathematics & Logic."
+        },
+        {
+          "studentId": 2,
+          "number": "DEMO-B-1",
+          "name": "Bruno Costa",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 55, "confidence": 0 },
+            { "code": "DB", "name": "Databases", "level": null, "confidence": 0 },
+            { "code": "WEB", "name": "Web Development", "level": 60, "confidence": 0 },
+            { "code": "QUAL", "name": "Software Quality", "level": null, "confidence": 0 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 50, "confidence": 0 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 70, "confidence": 0 }
+          ],
+          "explanation": "Cold start (self-assessment only): balances the group; levels count half until grades arrive."
+        },
+        {
+          "studentId": 4,
+          "number": "ST-004",
+          "name": "Duarte Silva",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 60, "confidence": 0.8 },
+            { "code": "DB", "name": "Databases", "level": 58, "confidence": 0.8 },
+            { "code": "WEB", "name": "Web Development", "level": 88, "confidence": 1 },
+            { "code": "QUAL", "name": "Software Quality", "level": 62, "confidence": 0.7 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 52, "confidence": 0.6 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 74, "confidence": 0.8 }
+          ],
+          "explanation": "Strongest of the group in Web Development."
+        },
+        {
+          "studentId": 7,
+          "number": "ST-007",
+          "name": "Gabriela Lopes",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 58, "confidence": 0.7 },
+            { "code": "DB", "name": "Databases", "level": 72, "confidence": 0.9 },
+            { "code": "WEB", "name": "Web Development", "level": 76, "confidence": 0.9 },
+            { "code": "QUAL", "name": "Software Quality", "level": 66, "confidence": 0.8 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 55, "confidence": 0.6 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 82, "confidence": 0.9 }
+          ],
+          "explanation": "Strongest of the group in Databases, Soft Skills & Teamwork."
+        },
+        {
+          "studentId": 8,
+          "number": "ST-008",
+          "name": "Hugo Pereira",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 64, "confidence": 0.8 },
+            { "code": "DB", "name": "Databases", "level": 60, "confidence": 0.7 },
+            { "code": "WEB", "name": "Web Development", "level": 52, "confidence": 0.6 },
+            { "code": "QUAL", "name": "Software Quality", "level": 74, "confidence": 0.9 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 78, "confidence": 1 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 62, "confidence": 0.7 }
+          ],
+          "explanation": "Strongest of the group in Software Quality."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "number": 2,
+      "score": 74.6,
+      "areas": [
+        { "code": "PROG", "name": "Programming", "level": 82 },
+        { "code": "DB", "name": "Databases", "level": 85 },
+        { "code": "WEB", "name": "Web Development", "level": 60.8 },
+        { "code": "QUAL", "name": "Software Quality", "level": 80 },
+        { "code": "MATH", "name": "Mathematics & Logic", "level": 75 },
+        { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 74.1 }
+      ],
+      "explanation": "Covers 6 of 6 areas with a member at 60 or more; weakest area: Web Development (60.8).",
+      "members": [
+        {
+          "studentId": 1,
+          "number": "DEMO-A-3",
+          "name": "Ana Ribeiro",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 82, "confidence": 1 },
+            { "code": "DB", "name": "Databases", "level": 70, "confidence": 1 },
+            { "code": "WEB", "name": "Web Development", "level": 64, "confidence": 0.9 },
+            { "code": "QUAL", "name": "Software Quality", "level": 58, "confidence": 0.8 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 75, "confidence": 1 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 60, "confidence": 0.6 }
+          ],
+          "explanation": "Strongest of the group in Programming, Web Development, Mathematics & Logic."
+        },
+        {
+          "studentId": 3,
+          "number": "ST-003",
+          "name": "Carla Mendes",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 68, "confidence": 0.9 },
+            { "code": "DB", "name": "Databases", "level": 85, "confidence": 1 },
+            { "code": "WEB", "name": "Web Development", "level": 55, "confidence": 0.8 },
+            { "code": "QUAL", "name": "Software Quality", "level": 72, "confidence": 0.9 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 60, "confidence": 0.8 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 66, "confidence": 0.7 }
+          ],
+          "explanation": "Strongest of the group in Databases."
+        },
+        {
+          "studentId": 5,
+          "number": "ST-005",
+          "name": "Eva Martins",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 74, "confidence": 1 },
+            { "code": "DB", "name": "Databases", "level": 62, "confidence": 0.9 },
+            { "code": "WEB", "name": "Web Development", "level": 58, "confidence": 0.7 },
+            { "code": "QUAL", "name": "Software Quality", "level": 80, "confidence": 1 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 70, "confidence": 0.9 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 55, "confidence": 0.6 }
+          ],
+          "explanation": "Strongest of the group in Software Quality."
+        },
+        {
+          "studentId": 9,
+          "number": "ST-009",
+          "name": "Inês Rocha",
+          "areas": [
+            { "code": "PROG", "name": "Programming", "level": 70, "confidence": 0.9 },
+            { "code": "DB", "name": "Databases", "level": 74, "confidence": 0.9 },
+            { "code": "WEB", "name": "Web Development", "level": 66, "confidence": 0.8 },
+            { "code": "QUAL", "name": "Software Quality", "level": 56, "confidence": 0.6 },
+            { "code": "MATH", "name": "Mathematics & Logic", "level": 62, "confidence": 0.7 },
+            { "code": "SOFT", "name": "Soft Skills & Teamwork", "level": 78, "confidence": 0.9 }
+          ],
+          "explanation": "Strongest of the group in Soft Skills & Teamwork."
+        }
+      ]
+    }
+  ]
+}
