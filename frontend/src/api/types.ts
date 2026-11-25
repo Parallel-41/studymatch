@@ -54,6 +54,7 @@ export type ProfileArea = {
   code: string
   name: string
   level: number | null
+  confidence?: number
 }
 
 export type ProfileCompetency = {
@@ -67,4 +68,19 @@ export type ProfileCompetency = {
 export type StudentProfileData = {
   areas: ProfileArea[]
   competencies: ProfileCompetency[]
+}
+
+export type GroupingContext = {
+  id: number
+  name: string
+  description: string
+  createdAt: string
+  studentIds: number[]
+}
+
+export type GroupingContextDraft = Pick<GroupingContext, 'name' | 'description'>
+
+export type GroupingEligibleStudent = Student & {
+  profile: StudentProfileData
+  coldStart: boolean
 }

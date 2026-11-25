@@ -2,6 +2,8 @@ import type {
   CompetencyExplanation,
   CourseUnit,
   HealthResponse,
+  GroupingContext,
+  GroupingContextDraft,
   StudentProfileData,
   Student,
   StudentAttempt,
@@ -91,10 +93,10 @@ const mockCompetencyExplanation: CompetencyExplanation = {
 
 const mockStudentProfile: StudentProfileData = {
   areas: [
-    { code: 'technical', name: 'Technical', level: 76 },
-    { code: 'analytical', name: 'Analytical', level: 84 },
-    { code: 'collaboration', name: 'Collaboration', level: 58 },
-    { code: 'communication', name: 'Communication', level: 0 },
+    { code: 'technical', name: 'Technical', level: 76, confidence: 0.7 },
+    { code: 'analytical', name: 'Analytical', level: 84, confidence: 0.8 },
+    { code: 'collaboration', name: 'Collaboration', level: 58, confidence: 0.5 },
+    { code: 'communication', name: 'Communication', level: 0, confidence: 0.2 },
   ],
   competencies: [
     { code: 'problem-solving', name: 'Problem solving', areaCode: 'analytical', level: 84, confidence: 'HIGH' },
@@ -148,6 +150,28 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
     }
 
     return fallback
+  }
+}
+
+async function getRequiredJson<T>(path: string): Promise<T> {
+  try {
+    const response = await fetch(path)
+    const payload = (await response.json().catch(() => null)) as
+      | (T & { code?: string; message?: string; details?: unknown })
+      | null
+
+    if (!response.ok) {
+      const message = typeof payload?.message === 'string'
+        ? payload.message
+        : `${response.status}: ${response.statusText}`
+      throw new ApiError(message, response.status, payload?.code, payload?.details)
+    }
+
+    if (payload == null) throw new ApiError('The API returned no data.', response.status)
+    return payload
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to reach the API.')
   }
 }
 
@@ -232,37 +256,151 @@ export const api = {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
     return profile ? fromBackendProfile(profile) : mockStudentProfile
   },
-  addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
-    const { season, ...fields } = attempt
-    const payload: StudentAttempt = {
-      ...fields,
-      id: Date.now(),
-      course: season && season !== 'NORMAL' ? `${fields.course} (${season})` : fields.course,
+  groupingStudents: async () => {
+    const students = await getRequiredJson<Student[]>('/api/students')
+    return await Promise.all(students.map(async (student) => {
+      const backendProfile = await getRequiredJson<BackendProfile>(`/api/students/${student.id}/profile`)
+      const profile = fromBackendProfile(backendProfile)
+      const hasEvidence = profile.areas.some((area) => area.level !== null && (area.confidence ?? 0) > 0)
+      return { ...student, profile, coldStart: !hasEvidence }
+    }))
+  },
+  groupingContexts: () => getRequiredJson<GroupingContext[]>('/api/grouping-contexts'),
+  groupingContext: (contextId: number) =>
+    getRequiredJson<GroupingContext>(`/api/grouping-contexts/${contextId}`),
+  createGroupingContext: async (draft: GroupingContextDraft) => {
+    try {
+      const response = await fetch('/api/grouping-contexts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupingContext & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to create grouping context.', response.status, body?.code, body?.details)
+      }
+      return body as GroupingContext
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
+
+      throw new ApiError('Unable to create grouping context.')
     }
+  },
+  updateGroupingContext: async (id: number, draft: GroupingContextDraft) => {
+    try {
+      const response = await fetch(`/api/grouping-contexts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupingContext & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to update grouping context.', response.status, body?.code, body?.details)
+      }
+      return body as GroupingContext
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
+
+      throw new ApiError('Unable to update grouping context.')
+    }
+  },
+  deleteGroupingContext: async (id: number) => {
+    try {
+      const response = await fetch(`/api/grouping-contexts/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as
+          | { message?: string; code?: string; details?: unknown }
+          | null
+        throw new ApiError(body?.message ?? 'Unable to delete grouping context.', response.status, body?.code, body?.details)
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
+
+      throw new ApiError('Unable to delete grouping context.')
+    }
+  },
+  attempt: async (studentId: number, draft: StudentAttemptDraft) => {
+    const payload = toBackendAttempt(draft)
 
     try {
       const response = await fetch(`/api/students/${studentId}/attempts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toBackendAttempt(attempt)),
+        body: JSON.stringify(payload),
       })
       const body = (await response.json().catch(() => null)) as
         | (StudentAttempt & { message?: string; code?: string; details?: unknown })
         | null
 
       if (!response.ok) {
-        throw new ApiError(body?.message ?? 'Unable to add attempt.', response.status, body?.code, body?.details)
+        throw new ApiError(body?.message ?? 'Unable to create attempt.', response.status, body?.code, body?.details)
       }
 
-      return payload
+      return body as StudentAttempt
     } catch (error) {
       if (error instanceof ApiError) {
         throw error
       }
 
-      mockAttempts[studentId] ??= []
-      mockAttempts[studentId].push(payload)
-      return payload
+      throw new ApiError('Unable to create attempt.')
+    }
+  },
+  addStudentAttempt: async (studentId: number, draft: StudentAttemptDraft) =>
+    api.attempt(studentId, draft),
+  deleteAttempt: async (studentId: number, attemptId: number) => {
+    try {
+      const response = await fetch(`/api/students/${studentId}/attempts/${attemptId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as
+          | { message?: string; code?: string; details?: unknown }
+          | null
+        throw new ApiError(body?.message ?? 'Unable to delete attempt.', response.status, body?.code, body?.details)
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error
+      }
+
+      throw new ApiError('Unable to delete attempt.')
+    }
+  },
+  saveGroupingParticipants: async (contextId: number, studentIds: number[]) => {
+    try {
+      const response = await fetch(`/api/grouping-contexts/${contextId}/participants`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds }),
+      })
+      const body = (await response.json().catch(() => null)) as
+        | (GroupingContext & { message?: string; code?: string; details?: unknown })
+        | null
+
+      if (!response.ok) {
+        throw new ApiError(body?.message ?? 'Unable to save participants.', response.status, body?.code, body?.details)
+      }
+      if (body == null) throw new ApiError('The API returned no grouping context.', response.status)
+      return body
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      throw new ApiError(error instanceof Error ? error.message : 'Unable to save participants.')
     }
   },
 }

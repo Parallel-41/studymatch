@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Software project teams",
+    "description": "Form balanced groups for the semester project.",
+    "createdAt": "2026-11-08T10:35:00Z",
+    "studentIds": [1, 2, 4]
+  },
+  {
+    "id": 2,
+    "name": "Database lab pairs",
+    "description": "Pair students for the relational database lab.",
+    "createdAt": "2026-11-06T14:10:00Z",
+    "studentIds": [3, 5]
+  }
+]
