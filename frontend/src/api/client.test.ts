@@ -103,13 +103,14 @@ describe('api client — grouping contexts', () => {
   })
 
   it('marks a student as cold-start when their profile has no evidence confidence', async () => {
-    vi.spyOn(api, 'students').mockResolvedValue([
-      { id: 22, number: 'S-22', name: 'New student', email: 'new@example.pt', currentYear: 1 },
-    ])
-    vi.spyOn(api, 'studentProfile').mockResolvedValue({
-      areas: [{ code: 'PROG', name: 'Programming', level: 60, confidence: 0 }],
-      competencies: [],
-    })
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse(200, [
+        { id: 22, number: 'S-22', name: 'New student', email: 'new@example.pt', currentYear: 1 },
+      ]))
+      .mockResolvedValueOnce(jsonResponse(200, {
+        areas: [{ code: 'PROG', name: 'Programming', level: 60, confidence: 0 }],
+        competencies: [],
+      })))
 
     const students = await api.groupingStudents()
 
@@ -121,5 +122,11 @@ describe('api client — grouping contexts', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(502, { message: 'Bad Gateway' })))
 
     await expect(api.groupingStudents()).rejects.toThrow('Bad Gateway')
+  })
+
+  it('does not substitute demo students when the backend cannot be reached', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    await expect(api.groupingStudents()).rejects.toThrow('Failed to fetch')
   })
 })

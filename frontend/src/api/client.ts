@@ -257,9 +257,10 @@ export const api = {
     return profile ? fromBackendProfile(profile) : mockStudentProfile
   },
   groupingStudents: async () => {
-    const students = await api.students()
+    const students = await getRequiredJson<Student[]>('/api/students')
     return await Promise.all(students.map(async (student) => {
-      const profile = await api.studentProfile(student.id)
+      const backendProfile = await getRequiredJson<BackendProfile>(`/api/students/${student.id}/profile`)
+      const profile = fromBackendProfile(backendProfile)
       const hasEvidence = profile.areas.some((area) => area.level !== null && (area.confidence ?? 0) > 0)
       return { ...student, profile, coldStart: !hasEvidence }
     }))

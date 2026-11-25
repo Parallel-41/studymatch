@@ -43,6 +43,17 @@ describe('GroupingContexts', () => {
     expect(screen.getByRole('button', { name: 'Save participants' })).toBeDisabled()
   })
 
+  it('shows participant API errors instead of displaying demo students', async () => {
+    vi.spyOn(api, 'groupingContexts').mockResolvedValue([context])
+    vi.spyOn(api, 'groupingContext').mockResolvedValue(context)
+    vi.spyOn(api, 'groupingStudents').mockRejectedValue(new Error('Backend unavailable'))
+
+    render(<GroupingContexts />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Backend unavailable')
+    expect(screen.queryByRole('checkbox', { name: 'Select Ana Ribeiro' })).not.toBeInTheDocument()
+  })
+
   it('creates a context, selects a participant, and saves the selection', async () => {
     const user = userEvent.setup()
     vi.spyOn(api, 'groupingContexts').mockResolvedValue([])
