@@ -81,7 +81,7 @@ export function fromBackendHistory(history: BackendHistory): StudentAttempt[] {
 
 export function fromBackendProfile(profile: BackendProfile): StudentProfileData {
   return {
-    areas: profile.areas.map(({ code, name, level }) => ({ code, name, level })),
+    areas: profile.areas.map(({ code, name, level, confidence }) => ({ code, name, level, confidence })),
     competencies: profile.competencies.map((competency) => ({
       code: competency.code,
       name: competency.name,

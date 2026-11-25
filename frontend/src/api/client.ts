@@ -2,6 +2,8 @@ import type {
   CompetencyExplanation,
   CourseUnit,
   HealthResponse,
+  GroupingContext,
+  GroupingContextDraft,
   StudentProfileData,
   Student,
   StudentAttempt,
@@ -25,6 +27,16 @@ export type StudentDraft = {
   registrationYear: number
   degreeProgramCode: string
 }
+
+export type GroupingConstraintType = 'TOGETHER' | 'APART'
+
+export type GroupingConstraint = {
+  id: number
+  type: GroupingConstraintType
+  studentIds: number[]
+}
+
+export type GroupingConstraintDraft = Omit<GroupingConstraint, 'id'>
 
 const academicYearStart = (now = new Date()) => (now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1)
 
@@ -91,10 +103,10 @@ const mockCompetencyExplanation: CompetencyExplanation = {
 
 const mockStudentProfile: StudentProfileData = {
   areas: [
-    { code: 'technical', name: 'Technical', level: 76 },
-    { code: 'analytical', name: 'Analytical', level: 84 },
-    { code: 'collaboration', name: 'Collaboration', level: 58 },
-    { code: 'communication', name: 'Communication', level: 0 },
+    { code: 'technical', name: 'Technical', level: 76, confidence: 0.7 },
+    { code: 'analytical', name: 'Analytical', level: 84, confidence: 0.8 },
+    { code: 'collaboration', name: 'Collaboration', level: 58, confidence: 0.5 },
+    { code: 'communication', name: 'Communication', level: 0, confidence: 0.2 },
   ],
   competencies: [
     { code: 'problem-solving', name: 'Problem solving', areaCode: 'analytical', level: 84, confidence: 'HIGH' },
@@ -148,6 +160,56 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
     }
 
     return fallback
+  }
+}
+
+async function getRequiredJson<T>(path: string): Promise<T> {
+  try {
+    const response = await fetch(path)
+    const payload = (await response.json().catch(() => null)) as
+      | (T & { code?: string; message?: string; details?: unknown })
+      | null
+
+    if (!response.ok) {
+      const responseMessage = typeof payload?.message === 'string'
+        ? payload.message
+        : `${response.status}: ${response.statusText}`
+
+      throw new ApiError(responseMessage, response.status, payload?.code, payload?.details)
+    }
+
+    if (payload == null) {
+      throw new ApiError('The API returned no data.', response.status)
+    }
+
+    return payload
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to reach the API.')
+  }
+}
+
+async function sendJson<T>(method: 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T | null> {
+  try {
+    const response = await fetch(path, {
+      method,
+      ...(body === undefined ? {} : {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    })
+    const payload = (await response.json().catch(() => null)) as
+      | (T & { message?: string; code?: string; details?: unknown })
+      | null
+
+    if (!response.ok) {
+      throw new ApiError(payload?.message ?? `Unable to ${method.toLowerCase()} resource.`, response.status, payload?.code, payload?.details)
+    }
+
+    return payload
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(error instanceof Error ? error.message : 'Unable to reach the API.')
   }
 }
 
@@ -231,6 +293,51 @@ export const api = {
   studentProfile: async (studentId: number) => {
     const profile = await getJson<BackendProfile | null>(`/api/students/${studentId}/profile`, null)
     return profile ? fromBackendProfile(profile) : mockStudentProfile
+  },
+  groupingStudents: async () => {
+    const students = await getRequiredJson<Student[]>('/api/students')
+    return await Promise.all(students.map(async (student) => {
+      const backendProfile = await getRequiredJson<BackendProfile>(`/api/students/${student.id}/profile`)
+      const profile = fromBackendProfile(backendProfile)
+      const hasEvidence = profile.areas.some((area) => area.level !== null && (area.confidence ?? 0) > 0)
+      return { ...student, profile, coldStart: !hasEvidence }
+    }))
+  },
+  groupingContexts: () => getRequiredJson<GroupingContext[]>('/api/grouping-contexts'),
+  groupingContext: (contextId: number) =>
+    getRequiredJson<GroupingContext>(`/api/grouping-contexts/${contextId}`),
+  createGroupingContext: async (draft: GroupingContextDraft) => {
+    const created = await sendJson<GroupingContext>('POST', '/api/grouping-contexts', draft)
+    if (created == null) throw new ApiError('The API returned no grouping context.')
+    return created
+  },
+  saveGroupingParticipants: async (contextId: number, studentIds: number[]) => {
+    const updated = await sendJson<GroupingContext>(
+      'PUT',
+      `/api/grouping-contexts/${contextId}/participants`,
+      { studentIds },
+    )
+    if (updated == null) throw new ApiError('The API returned no grouping context.')
+    return updated
+  },
+  groupingConstraints: (contextId: number) =>
+    getRequiredJson<GroupingConstraint[]>(`/api/grouping-contexts/${contextId}/constraints`),
+  addGroupingConstraint: async (contextId: number, draft: GroupingConstraintDraft) => {
+    const created = await sendJson<GroupingConstraint>(
+      'POST',
+      `/api/grouping-contexts/${contextId}/constraints`,
+      draft,
+    )
+    if (created == null) {
+      throw new ApiError('The API returned no constraint.')
+    }
+    return created
+  },
+  removeGroupingConstraint: async (contextId: number, constraintId: number) => {
+    await sendJson<never>(
+      'DELETE',
+      `/api/grouping-contexts/${contextId}/constraints/${constraintId}`,
+    )
   },
   addStudentAttempt: async (studentId: number, attempt: StudentAttemptDraft) => {
     const { season, ...fields } = attempt
