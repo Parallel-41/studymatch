@@ -103,13 +103,14 @@ describe('api client — grouping contexts', () => {
   })
 
   it('marks a student as cold-start when their profile has no evidence confidence', async () => {
-    vi.spyOn(api, 'students').mockResolvedValue([
-      { id: 22, number: 'S-22', name: 'New student', email: 'new@example.pt', currentYear: 1 },
-    ])
-    vi.spyOn(api, 'studentProfile').mockResolvedValue({
-      areas: [{ code: 'PROG', name: 'Programming', level: 60, confidence: 0 }],
-      competencies: [],
-    })
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse(200, [
+        { id: 22, number: 'S-22', name: 'New student', email: 'new@example.pt', currentYear: 1 },
+      ]))
+      .mockResolvedValueOnce(jsonResponse(200, {
+        areas: [{ code: 'PROG', name: 'Programming', level: 60, confidence: 0 }],
+        competencies: [],
+      })))
 
     const students = await api.groupingStudents()
 
@@ -117,13 +118,18 @@ describe('api client — grouping contexts', () => {
     expect(students[0].profile.areas[0].level).toBe(60)
   })
 
-  it('uses the eligible-student example when the students endpoint is unavailable', async () => {
+  it('throws the API error when eligible students are unavailable', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(502, { message: 'Bad Gateway' })))
 
-    const students = await api.groupingStudents()
+    await expect(api.groupingStudents()).rejects.toThrow('Bad Gateway')
+  })
 
-    expect(students).toHaveLength(6)
-    expect(students.some((student) => student.coldStart)).toBe(true)
-    expect(students.some((student) => !student.coldStart)).toBe(true)
+  it('propagates unavailable context API errors for reads and mutations', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(502, { message: 'Bad Gateway' }))))
+
+    await expect(api.groupingContexts()).rejects.toThrow('Bad Gateway')
+    await expect(api.groupingContext(8)).rejects.toThrow('Bad Gateway')
+    await expect(api.createGroupingContext({ name: 'Project groups', description: '' })).rejects.toThrow('Bad Gateway')
+    await expect(api.saveGroupingParticipants(8, [1, 3])).rejects.toThrow('Bad Gateway')
   })
 })
